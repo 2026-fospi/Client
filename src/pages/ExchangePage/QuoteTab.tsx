@@ -8,6 +8,7 @@ import type {StockHistoryPoint} from '../../api/stock';
 import {useExchangePage} from './exchangePageContext';
 import {buyStock, sellStock} from '../../api/stock';
 import {getMyAssets} from '../../api/asset';
+import {getRoomEndDate} from '../../api/auth';
 
 const ChartSection = styled(Flex).attrs({flex: 1})`
     padding: 0 50px;
@@ -105,8 +106,12 @@ const OrderTriggerBtn = styled.button<{ $buy?: boolean }>`
     border-radius: 8px;
     cursor: pointer;
 
-    &:hover {
+    &:hover:not(:disabled) {
         opacity: 0.9;
+    }
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
     }
 `;
 
@@ -268,6 +273,14 @@ export default function QuoteTab() {
 
     const POLL_INTERVAL_MS = 5_000;
 
+    /** 패널티 지정 종료일(23:59:59)이 지났으면 매수/매도 비활성화 */
+    const isPenaltyTime = (() => {
+        const endStr = getRoomEndDate();
+        if (!endStr) return false;
+        const end = new Date(`${endStr}T23:59:59`).getTime();
+        return Number.isNaN(end) ? false : end < Date.now();
+    })();
+
     useEffect(() => {
         const stockId = Number(selectedMemberId);
         if (Number.isNaN(stockId) || selectedMemberId === '') {
@@ -363,6 +376,7 @@ export default function QuoteTab() {
     }, [candleData]);
 
     const openOrderModal = (type: 'buy' | 'sell') => {
+        if (isPenaltyTime) return;
         setOrderModal(type);
         setModalQuantity('');
         setModalTotal('');
@@ -461,10 +475,10 @@ export default function QuoteTab() {
             </ChartSection>
 
             <OrderSection>
-                <OrderTriggerBtn $buy onClick={() => openOrderModal('buy')}>
+                <OrderTriggerBtn $buy disabled={isPenaltyTime} onClick={() => openOrderModal('buy')}>
                     매수
                 </OrderTriggerBtn>
-                <OrderTriggerBtn $buy={false} onClick={() => openOrderModal('sell')}>
+                <OrderTriggerBtn $buy={false} disabled={isPenaltyTime} onClick={() => openOrderModal('sell')}>
                     매도
                 </OrderTriggerBtn>
             </OrderSection>
