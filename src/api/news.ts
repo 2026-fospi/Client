@@ -2,8 +2,8 @@ import { getAccessToken } from './auth';
 import { request } from './http';
 
 export interface NewsCreateRequest {
-  title: string;
-  content: string;
+  event_description: string;
+  room_code?: string | null;
   related_user_id?: number | null;
 }
 

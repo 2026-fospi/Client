@@ -36,6 +36,7 @@ const TopActionRow = styled(Flex).attrs({ row: true, verticalCenter: true })`
   width: min(1020px, 100%);
   margin: 0 auto;
   justify-content: flex-end;
+  padding-top: 12px;
   margin-bottom: 40px;
 `;
 
@@ -51,7 +52,7 @@ const AddButton = styled.button`
   background: #ffffff;
   box-shadow: 0 0 29.5px 0 rgba(0, 0, 0, 0.08);
   font-family: 'Pretendard', sans-serif;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 500;
   color: #000000;
   cursor: pointer;
@@ -72,7 +73,7 @@ const PlusIcon = styled.span`
 
 const Grid = styled.div`
   display: grid;
-  width: min(1020px, 100%);
+  width: min(1040px, 100%);
   margin: 0 auto;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 22px 18px;
@@ -92,6 +93,7 @@ const Grid = styled.div`
 
 const EventCard = styled.button`
   height: 283px;
+  min-width: 0;
   border: none;
   text-align: left;
   border-radius: 12px;
@@ -119,6 +121,11 @@ const CardTitle = styled.p`
   line-height: 1.4;
   letter-spacing: 0.15px;
   color: #000000;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 `;
 
 const CardDescription = styled.p`
@@ -129,18 +136,40 @@ const CardDescription = styled.p`
   line-height: 1.4;
   letter-spacing: 0.15px;
   color: #757575;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
 `;
 
 const CardFooter = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 10px;
   font-family: 'Pretendard', sans-serif;
   font-size: 16px;
   font-weight: 500;
   line-height: 1.4;
   letter-spacing: 0.15px;
   color: #585858;
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  span:first-child {
+    flex: 1;
+    min-width: 0;
+  }
+
+  span:last-child {
+    max-width: 42%;
+    text-align: right;
+  }
 `;
 
 const Overlay = styled.div`
@@ -257,9 +286,15 @@ const FieldInput = styled.input`
   background: #ffffff;
   padding: 0 24px;
   font-family: 'Pretendard', sans-serif;
-  font-size: 22px;
+  font-size: 16px;
+  line-height: 1.4;
   color: #000000;
   box-sizing: border-box;
+
+  &::placeholder {
+    font-size: 16px;
+    color: #8f8f8f;
+  }
 `;
 
 const FieldSelectTrigger = styled.button<{ $placeholder?: boolean }>`
@@ -269,7 +304,7 @@ const FieldSelectTrigger = styled.button<{ $placeholder?: boolean }>`
   background: #ffffff;
   padding: 0 16px;
   font-family: 'Pretendard', sans-serif;
-  font-size: 22px;
+  font-size: ${({ $placeholder }) => ($placeholder ? '16px' : '22px')};
   color: ${({ $placeholder }) => ($placeholder ? '#8f8f8f' : '#000000')};
   box-sizing: border-box;
   text-align: left;
@@ -283,10 +318,16 @@ const FieldTextArea = styled.textarea`
   background: #ffffff;
   padding: 16px 16px;
   font-family: 'Pretendard', sans-serif;
-  font-size: 22px;
+  font-size: 16px;
+  line-height: 1.5;
   color: #000000;
   resize: none;
   box-sizing: border-box;
+
+  &::placeholder {
+    font-size: 16px;
+    color: #8f8f8f;
+  }
 `;
 
 const CreateActionRow = styled.div`
@@ -369,11 +410,32 @@ const TargetItem = styled.button<{ $active?: boolean }>`
   cursor: pointer;
 `;
 
+const TargetItemRow = styled.span`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+`;
+
+const Check = styled.span<{ $active?: boolean }>`
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1px solid ${({ $active }) => ($active ? '#1783ff' : '#c8ced6')};
+  background: ${({ $active }) => ($active ? '#1783ff' : '#ffffff')};
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+`;
+
 const TargetModalFooter = styled.div`
   border-top: 1px solid #eef1f5;
   padding: 10px 6px 2px;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  gap: 10px;
 `;
 
 const TargetCloseButton = styled.button`
@@ -382,6 +444,19 @@ const TargetCloseButton = styled.button`
   color: #4b5563;
   font-family: 'Pretendard', sans-serif;
   font-size: 14px;
+  cursor: pointer;
+`;
+
+const TargetApplyButton = styled.button`
+  border: none;
+  background: #1783ff;
+  color: #ffffff;
+  font-family: 'Pretendard', sans-serif;
+  font-size: 14px;
+  border-radius: 8px;
+  height: 34px;
+  min-width: 64px;
+  padding: 0 12px;
   cursor: pointer;
 `;
 
@@ -413,13 +488,28 @@ function EventsPage() {
   const [selectedEvent, setSelectedEvent] = useState<EventCardItem | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [newTitle, setNewTitle] = useState('');
-  const [selectedTargetUserId, setSelectedTargetUserId] = useState<number | null | undefined>(undefined);
+  const [selectedTargetUserIds, setSelectedTargetUserIds] = useState<number[]>([]);
+  const [isAllTargetSelected, setIsAllTargetSelected] = useState(false);
   const [newDescription, setNewDescription] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   const [users, setUsers] = useState<UserItem[]>([]);
   const [isTargetModalOpen, setIsTargetModalOpen] = useState(false);
+
+  const targetLabel =
+    isAllTargetSelected
+      ? '전체'
+      : selectedTargetUserIds.length === 0
+        ? '대상을 선택하세요.'
+        : (() => {
+            const names = users
+              .filter((user) => selectedTargetUserIds.includes(user.id))
+              .map((user) => user.name);
+            if (names.length === 0) return '대상을 선택하세요.';
+            if (names.length === 1) return names[0];
+            return `${names[0]} 외 ${names.length - 1}명 선택됨`;
+          })();
 
   useEffect(() => {
     async function loadUsers() {
@@ -465,20 +555,29 @@ function EventsPage() {
     setStatusMessage('');
 
     try {
-      const created = await createNews({
-        title: newTitle.trim(),
-        content: newDescription.trim(),
-        related_user_id: selectedTargetUserId ?? null,
-      });
+      const targetIds = isAllTargetSelected
+        ? [null]
+        : selectedTargetUserIds.length > 0
+          ? selectedTargetUserIds
+          : [null];
 
-      const mapped = mapNewsToCard(created, users);
+      const createdList = await Promise.all(
+        targetIds.map((targetId) =>
+          createNews({
+            event_description: `[${newTitle.trim()}] ${newDescription.trim()}`,
+            related_user_id: targetId,
+          })
+        )
+      );
 
-      setEvents((prev) => [mapped, ...prev]);
+      const mappedList = createdList.map((created) => mapNewsToCard(created, users));
+      setEvents((prev) => [...mappedList, ...prev]);
       setIsCreating(false);
-      setSelectedEvent(mapped);
+      setSelectedEvent(mappedList[0] ?? null);
       setNewTitle('');
       setNewDescription('');
-      setSelectedTargetUserId(undefined);
+      setSelectedTargetUserIds([]);
+      setIsAllTargetSelected(false);
     } catch (error) {
       const message = error instanceof Error ? error.message : '뉴스 추가 중 오류가 발생했습니다.';
       setStatusMessage(message);
@@ -505,14 +604,10 @@ function EventsPage() {
               <FieldLabel>대상</FieldLabel>
               <FieldSelectTrigger
                 type="button"
-                $placeholder={selectedTargetUserId === undefined}
+                $placeholder={!isAllTargetSelected && selectedTargetUserIds.length === 0}
                 onClick={() => setIsTargetModalOpen(true)}
               >
-                {selectedTargetUserId === undefined
-                  ? '대상을 선택하세요.'
-                  : selectedTargetUserId === null
-                    ? '전체'
-                    : users.find((user) => user.id === selectedTargetUserId)?.name ?? `유저 #${selectedTargetUserId}`}
+                {targetLabel}
               </FieldSelectTrigger>
             </Field>
 
@@ -593,26 +688,41 @@ function EventsPage() {
             <TargetList>
               <TargetItem
                 type="button"
-                $active={selectedTargetUserId === null}
+                $active={isAllTargetSelected}
                 onClick={() => {
-                  setSelectedTargetUserId(null);
-                  setIsTargetModalOpen(false);
+                  setIsAllTargetSelected((prev) => {
+                    const next = !prev;
+                    if (next) {
+                      setSelectedTargetUserIds([]);
+                    }
+                    return next;
+                  });
                 }}
               >
-                전체
+                <TargetItemRow>
+                  <span>전체</span>
+                  <Check $active={isAllTargetSelected}>{isAllTargetSelected ? '✓' : ''}</Check>
+                </TargetItemRow>
               </TargetItem>
 
               {users.map((user) => (
                 <TargetItem
                   key={user.id}
                   type="button"
-                  $active={selectedTargetUserId === user.id}
+                  $active={selectedTargetUserIds.includes(user.id)}
                   onClick={() => {
-                    setSelectedTargetUserId(user.id);
-                    setIsTargetModalOpen(false);
+                    setIsAllTargetSelected(false);
+                    setSelectedTargetUserIds((prev) =>
+                      prev.includes(user.id) ? prev.filter((id) => id !== user.id) : [...prev, user.id]
+                    );
                   }}
                 >
-                  {user.name}
+                  <TargetItemRow>
+                    <span>{user.name}</span>
+                    <Check $active={selectedTargetUserIds.includes(user.id)}>
+                      {selectedTargetUserIds.includes(user.id) ? '✓' : ''}
+                    </Check>
+                  </TargetItemRow>
                 </TargetItem>
               ))}
             </TargetList>
@@ -621,6 +731,9 @@ function EventsPage() {
               <TargetCloseButton type="button" onClick={() => setIsTargetModalOpen(false)}>
                 닫기
               </TargetCloseButton>
+              <TargetApplyButton type="button" onClick={() => setIsTargetModalOpen(false)}>
+                확인
+              </TargetApplyButton>
             </TargetModalFooter>
           </TargetModal>
         </TargetOverlay>
