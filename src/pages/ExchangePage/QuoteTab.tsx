@@ -37,27 +37,29 @@ const ChartOverlay = styled.div`
 `;
 
 
-type CandlePoint = { time: string; open: number; high: number; low: number; close: number };
+/** 1분봉: time은 해당 분의 시작 시각(UTC 초) */
+type CandlePoint = { time: number; open: number; high: number; low: number; close: number };
 
-/** history를 일별로 묶어 OHLC 캔들 데이터로 변환 (time = yyyy-MM-dd) */
-function historyToCandles(history: StockHistoryPoint[]): CandlePoint[] {
+/** history를 1분 단위로 묶어 OHLC 캔들로 변환. 새 데이터가 오른쪽으로 이어지는 실시간 차트용 */
+function historyTo1MinCandles(history: StockHistoryPoint[]): CandlePoint[] {
     if (!history || history.length === 0) return [];
     const sorted = [...history].sort(
         (a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime()
     );
-    const byDay = new Map<string, number[]>();
+    const byMinute = new Map<number, number[]>();
     for (const p of sorted) {
-        const d = new Date(p.recorded_at);
-        const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
-        if (!byDay.has(key)) byDay.set(key, []);
-        byDay.get(key)!.push(parseFloat(p.price));
+        const t = new Date(p.recorded_at).getTime();
+        const minuteStart = Math.floor(t / 60000) * 60000;
+        const key = minuteStart;
+        if (!byMinute.has(key)) byMinute.set(key, []);
+        byMinute.get(key)!.push(parseFloat(p.price));
     }
     const result: CandlePoint[] = [];
-    const keys = Array.from(byDay.keys()).sort();
+    const keys = Array.from(byMinute.keys()).sort((a, b) => a - b);
     for (const key of keys) {
-        const prices = byDay.get(key)!;
+        const prices = byMinute.get(key)!;
         result.push({
-            time: key,
+            time: key / 1000,
             open: prices[0]!,
             high: Math.max(...prices),
             low: Math.min(...prices),
@@ -237,6 +239,8 @@ export default function QuoteTab() {
     const chartRef = useRef<ReturnType<typeof createChart> | null>(null);
     const seriesRef = useRef<{ setData: (data: CandlePoint[]) => void } | null>(null);
 
+    const POLL_INTERVAL_MS = 10_000;
+
     useEffect(() => {
         const stockId = Number(selectedMemberId);
         if (Number.isNaN(stockId) || selectedMemberId === '') {
@@ -245,17 +249,26 @@ export default function QuoteTab() {
             setChartError(null);
             return;
         }
+
+        function fetchChart() {
+            getStockDetail(stockId)
+                .then((res) => {
+                    setCandleData(historyTo1MinCandles(res.history ?? []));
+                    setChartError(null);
+                })
+                .catch((e) => {
+                    setChartError(e instanceof Error ? e.message : '차트 데이터를 불러오지 못했습니다.');
+                    setCandleData([]);
+                })
+                .finally(() => setChartLoading(false));
+        }
+
         setChartLoading(true);
         setChartError(null);
-        getStockDetail(stockId)
-            .then((res) => {
-                setCandleData(historyToCandles(res.history ?? []));
-            })
-            .catch((e) => {
-                setChartError(e instanceof Error ? e.message : '차트 데이터를 불러오지 못했습니다.');
-                setCandleData([]);
-            })
-            .finally(() => setChartLoading(false));
+        fetchChart();
+
+        const intervalId = setInterval(fetchChart, POLL_INTERVAL_MS);
+        return () => clearInterval(intervalId);
     }, [selectedMemberId]);
 
     useEffect(() => {
@@ -265,7 +278,11 @@ export default function QuoteTab() {
             grid: {vertLines: {color: '#f1f5f9'}, horzLines: {color: '#f1f5f9'}},
             width: chartContainerRef.current.clientWidth,
             height: 320,
-            timeScale: {timeVisible: true, secondsVisible: false},
+            timeScale: {
+                timeVisible: true,
+                secondsVisible: true,
+                rightOffset: 12,
+            },
             rightPriceScale: {borderColor: '#e2e8f0'},
         });
         const series = chart.addSeries(CandlestickSeries, {
@@ -273,6 +290,8 @@ export default function QuoteTab() {
             downColor: '#2563eb',
             borderUpColor: '#ef4444',
             borderDownColor: '#2563eb',
+            wickUpColor: '#ef4444',
+            wickDownColor: '#2563eb',
         }) as unknown as { setData: (data: CandlePoint[]) => void };
         chartRef.current = chart;
         seriesRef.current = series;
@@ -284,8 +303,11 @@ export default function QuoteTab() {
     }, []);
 
     useEffect(() => {
-        if (!seriesRef.current) return;
-        if (candleData.length > 0) seriesRef.current.setData(candleData);
+        if (!seriesRef.current || !chartRef.current) return;
+        if (candleData.length > 0) {
+            seriesRef.current.setData(candleData);
+            chartRef.current.timeScale().fitContent();
+        }
     }, [candleData]);
 
     const openOrderModal = (type: 'buy' | 'sell') => {

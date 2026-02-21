@@ -25,6 +25,7 @@ export interface CreateRoomRequest {
   penalties?: string[];
   start_date?: string | null;
   end_date?: string | null;
+  discord_user_id?: string | null;
 }
 
 export interface CreateRoomResponse {

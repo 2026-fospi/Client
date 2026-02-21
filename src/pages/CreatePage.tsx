@@ -396,6 +396,7 @@ function CreatePage() {
         penalties: penaltyContent.trim() ? [penaltyContent.trim()] : [],
         start_date: toStartIso(startDate),
         end_date: toEndIso(endDate),
+        discord_user_id: createDiscordUserId.trim() || null,
       });
 
       saveRoomCode(response.room_code);
@@ -521,6 +522,16 @@ function CreatePage() {
                       />
                     </Field>
                   )}
+
+                  <Field>
+                    <Label>디스코드 아이디</Label>
+                    <Input
+                      type="text"
+                      value={createDiscordUserId}
+                      onChange={(event) => setCreateDiscordUserId(event.target.value)}
+                      placeholder="디스코드 아이디를 입력하세요"
+                    />
+                  </Field>
 
                   <Field>
                     <Label>페널티 기간</Label>
