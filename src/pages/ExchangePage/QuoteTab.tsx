@@ -7,6 +7,7 @@ import {getStockDetail} from '../../api/stock';
 import type {StockHistoryPoint} from '../../api/stock';
 import {useExchangePage} from './exchangePageContext';
 import {buyStock, sellStock} from '../../api/stock';
+import {getMyAssets} from '../../api/asset';
 
 const ChartSection = styled(Flex).attrs({flex: 1})`
     padding: 0 50px;
@@ -232,6 +233,9 @@ export default function QuoteTab() {
     const [modalTotal, setModalTotal] = useState('');
     const [submitLoading, setSubmitLoading] = useState(false);
     const [modalMessage, setModalMessage] = useState<{ text: string; error: boolean } | null>(null);
+    const [orderAvailableCash, setOrderAvailableCash] = useState(0);
+    const [orderAvailableHoldingQty, setOrderAvailableHoldingQty] = useState<number>(0);
+    const [assetsLoading, setAssetsLoading] = useState(false);
     const [chartLoading, setChartLoading] = useState(true);
     const [chartError, setChartError] = useState<string | null>(null);
     const [candleData, setCandleData] = useState<CandlePoint[]>([]);
@@ -315,6 +319,21 @@ export default function QuoteTab() {
         setModalQuantity('');
         setModalTotal('');
         setModalMessage(null);
+        setOrderAvailableCash(0);
+        setOrderAvailableHoldingQty(0);
+        setAssetsLoading(true);
+        getMyAssets()
+            .then((res) => {
+                setOrderAvailableCash(parseFloat(res.cash) || 0);
+                const stockUserId = Number(selectedMemberId);
+                const holding = res.holdings?.find((h) => h.stock_user_id === stockUserId);
+                setOrderAvailableHoldingQty(holding?.quantity ?? 0);
+            })
+            .catch(() => {
+                setOrderAvailableCash(0);
+                setOrderAvailableHoldingQty(0);
+            })
+            .finally(() => setAssetsLoading(false));
     };
     const closeOrderModal = () => {
         setOrderModal(null);
@@ -415,10 +434,12 @@ export default function QuoteTab() {
                                 <ModalFieldLabel>주문가능</ModalFieldLabel>
                                 <OrderAvailableValue>
                   <span>
-                    {orderModal === 'buy'
-                        ? formatPrice(1000000)
-                        : formatPrice(selectedMember.currentPrice * 10)}{' '}
-                      KRW
+                                    {assetsLoading
+                                        ? '로딩 중...'
+                                        : orderModal === 'buy'
+                                            ? formatPrice(orderAvailableCash)
+                                            : formatPrice((orderAvailableHoldingQty ?? 0) * selectedMember.currentPrice)}{' '}
+                                    {!assetsLoading && 'KRW'}
                   </span>
                                 </OrderAvailableValue>
                             </ModalFieldRow>
@@ -445,7 +466,10 @@ export default function QuoteTab() {
                                         onClick={() => {
                                             if (label === '직접입력') return;
                                             const pct = label === '10%' ? 0.1 : label === '50%' ? 0.5 : 1;
-                                            const maxQ = orderModal === 'buy' ? 1000000 / selectedMember.currentPrice : 10;
+                                            const maxQ =
+                                                orderModal === 'buy'
+                                                    ? (selectedMember.currentPrice > 0 ? orderAvailableCash / selectedMember.currentPrice : 0)
+                                                    : orderAvailableHoldingQty ?? 0;
                                             const q = maxQ * pct;
                                             setModalQuantity(q.toFixed(2));
                                             setModalTotal(formatPrice(q * selectedMember.currentPrice));
