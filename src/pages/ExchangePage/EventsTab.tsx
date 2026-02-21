@@ -60,7 +60,7 @@ function formatChangeAmount(amount: string): string {
   const n = parseFloat(amount);
   if (n > 0) return `+${amount}`;
   if (n < 0) return amount;
-  return '0';
+  return '-';
 }
 
 export default function EventsTab() {

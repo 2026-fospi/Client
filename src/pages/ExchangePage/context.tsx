@@ -89,7 +89,7 @@ export function ExchangePageProvider({
   );
 
   const formatPrice = (n: number) => n.toLocaleString('ko-KR');
-  const formatChange = (p: number) => `${p >= 0 ? '+' : ''}${p.toFixed(2)}%`;
+  const formatChange = (p: number) => (p === 0 ? '-' : `${p >= 0 ? '+' : ''}${p.toFixed(2)}%`);
 
   const value = useMemo(
     () => ({

@@ -41,24 +41,25 @@ const ChartOverlay = styled.div`
 /** 1분봉 캔들: time은 해당 분 시작 시각(UTC 초) */
 type CandlePoint = { time: number; open: number; high: number; low: number; close: number };
 
-/** history를 1분 단위로 묶어 OHLC 캔들로 변환 (API는 10~30초 간격 포인트) */
-function historyTo1MinCandles(history: StockHistoryPoint[]): CandlePoint[] {
+const BAR_MS = 60 * 1000; // 1분
+
+/** history를 1분 단위로 묶어 OHLC 캔들로 변환 */
+function historyToCandles(history: StockHistoryPoint[]): CandlePoint[] {
     if (!history || history.length === 0) return [];
     const sorted = [...history].sort(
         (a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime()
     );
-    const barMs = 60 * 1000;
-    const byMinute = new Map<number, number[]>();
+    const byBar = new Map<number, number[]>();
     for (const p of sorted) {
         const t = new Date(p.recorded_at).getTime();
-        const minuteStart = Math.floor(t / barMs) * barMs;
-        if (!byMinute.has(minuteStart)) byMinute.set(minuteStart, []);
-        byMinute.get(minuteStart)!.push(parseFloat(p.price));
+        const barStart = Math.floor(t / BAR_MS) * BAR_MS;
+        if (!byBar.has(barStart)) byBar.set(barStart, []);
+        byBar.get(barStart)!.push(parseFloat(p.price));
     }
     const result: CandlePoint[] = [];
-    const keys = Array.from(byMinute.keys()).sort((a, b) => a - b);
+    const keys = Array.from(byBar.keys()).sort((a, b) => a - b);
     for (const key of keys) {
-        const prices = byMinute.get(key)!;
+        const prices = byBar.get(key)!;
         result.push({
             time: key / 1000,
             open: prices[0]!,
@@ -68,6 +69,23 @@ function historyTo1MinCandles(history: StockHistoryPoint[]): CandlePoint[] {
         });
     }
     return result;
+}
+
+/** 캔들에 API current_price 반영. history가 안 바뀌어도 마지막 봉이 최신가로 갱신됨 */
+function applyCurrentPriceToCandles(
+    candles: CandlePoint[],
+    currentPriceStr: string | undefined
+): CandlePoint[] {
+    const current = currentPriceStr != null ? parseFloat(currentPriceStr) : NaN;
+    if (candles.length === 0 || Number.isNaN(current)) return candles;
+    const last = candles[candles.length - 1]!;
+    const updated: CandlePoint = {
+        ...last,
+        close: current,
+        high: Math.max(last.high, current),
+        low: Math.min(last.low, current),
+    };
+    return [...candles.slice(0, -1), updated];
 }
 
 const OrderSection = styled(Flex).attrs({row: true, gap: 16, flexEnd: true})`
@@ -241,7 +259,12 @@ export default function QuoteTab() {
     const [candleData, setCandleData] = useState<CandlePoint[]>([]);
     const chartContainerRef = useRef<HTMLDivElement>(null);
     const chartRef = useRef<ReturnType<typeof createChart> | null>(null);
-    const seriesRef = useRef<{ setData: (data: CandlePoint[]) => void } | null>(null);
+    const seriesRef = useRef<{
+        setData: (data: CandlePoint[]) => void;
+        update: (bar: CandlePoint) => void;
+    } | null>(null);
+    const prevCandleLengthRef = useRef(0);
+    const prevApiSignatureRef = useRef<string | null>(null);
 
     const POLL_INTERVAL_MS = 5_000;
 
@@ -251,13 +274,30 @@ export default function QuoteTab() {
             setCandleData([]);
             setChartLoading(false);
             setChartError(null);
+            prevApiSignatureRef.current = null;
             return;
         }
 
         function fetchChart() {
             getStockDetail(stockId)
                 .then((res) => {
-                    setCandleData(historyTo1MinCandles(res.history ?? []));
+                    const history = res.history ?? [];
+                    const signature = `${res.current_price}|${history.length}|${history[history.length - 1]?.recorded_at ?? ''}`;
+                    if (prevApiSignatureRef.current === signature) {
+                        return;
+                    }
+                    prevApiSignatureRef.current = signature;
+
+                    const candles = historyToCandles(history);
+                    const nextData = applyCurrentPriceToCandles(candles, res.current_price);
+                    if (
+                        seriesRef.current &&
+                        nextData.length > 0 &&
+                        nextData.length === prevCandleLengthRef.current
+                    ) {
+                        seriesRef.current.update(nextData[nextData.length - 1]!);
+                    }
+                    setCandleData(nextData);
                     setChartError(null);
                 })
                 .catch((e) => {
@@ -298,7 +338,7 @@ export default function QuoteTab() {
             borderDownColor: '#2563eb',
             wickUpColor: '#ef4444',
             wickDownColor: '#2563eb',
-        }) as unknown as { setData: (data: CandlePoint[]) => void };
+        }) as unknown as { setData: (data: CandlePoint[]) => void; update: (bar: CandlePoint) => void };
         chartRef.current = chart;
         seriesRef.current = series;
         return () => {
@@ -311,8 +351,14 @@ export default function QuoteTab() {
     useEffect(() => {
         if (!seriesRef.current || !chartRef.current) return;
         if (candleData.length > 0) {
-            seriesRef.current.setData(candleData);
-            chartRef.current.timeScale().fitContent();
+            const len = candleData.length;
+            if (len !== prevCandleLengthRef.current) {
+                seriesRef.current.setData(candleData);
+                chartRef.current.timeScale().fitContent();
+                prevCandleLengthRef.current = len;
+            }
+        } else {
+            prevCandleLengthRef.current = 0;
         }
     }, [candleData]);
 

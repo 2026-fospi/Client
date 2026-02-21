@@ -161,8 +161,8 @@ function ExchangePageContent() {
                             selectedMember.changePercent > 0 ? true : selectedMember.changePercent < 0 ? false : undefined
                         }
                     >
-                        {formatChange(selectedMember.changePercent)}{' '}
-                        {selectedMember.changePercent >= 0 ? '▲' : '▼'}
+                        {formatChange(selectedMember.changePercent)}
+                        {selectedMember.changePercent !== 0 && (selectedMember.changePercent > 0 ? ' ▲' : ' ▼')}
                     </AssetChange>
                 </AssetHeader>
 
