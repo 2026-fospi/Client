@@ -10,7 +10,7 @@ const Page = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 18px 20px;
+  padding: 12px 16px;
   overflow: hidden;
 
   @media (max-width: 540px) {
@@ -40,26 +40,27 @@ const BackgroundImage = styled.img`
 
 const Card = styled.div`
   position: relative;
-  width: min(446px, 100%);
-  min-height: min(500px, calc(100vh - 36px));
-  border-radius: 34px;
-  background: rgba(232, 236, 244, 0.9);
+  width: min(710px, 100%);
+  min-height: min(1000px, calc(100vh - 24px));
+  border-radius: 60px;
+  background: rgba(229, 236, 246, 0.88);
   backdrop-filter: saturate(160%) blur(8px);
-  padding: 42px 38px 24px;
+  padding: 92px 56px 86px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 
   @media (max-width: 540px) {
     width: 100%;
     min-height: calc(100vh - 4px);
-    padding: 34px 30px 22px;
+    border-radius: 32px;
+    padding: 44px 24px 38px;
   }
 `;
 
 const Logo = styled.div`
   text-align: center;
-  font-size: 48px;
+  font-size: 46px;
   font-weight: 800;
   letter-spacing: -0.02em;
   color: #1783ff;
@@ -68,7 +69,7 @@ const Logo = styled.div`
 const Title = styled.h1`
   margin: 0;
   text-align: center;
-  font-size: 37px;
+  font-size: 38px;
   font-weight: 700;
   color: #000;
 `;
@@ -77,7 +78,7 @@ const Form = styled.form`
   display: flex;
   flex-direction: column;
   gap: 14px;
-  margin-top: 8px;
+  margin-top: 14px;
   flex: 1;
 `;
 
@@ -89,17 +90,17 @@ const Field = styled.label`
 
 const LabelText = styled.span`
   font-size: 14px;
-  font-weight: 400;
+  font-weight: 500;
   color: #000;
 `;
 
 const Input = styled.input`
-  height: 39px;
+  height: 42px;
   border-radius: 8px;
   border: 1px solid #9da4af;
   background: transparent;
   padding: 0 12px;
-  font-size: 17px;
+  font-size: 16px;
   outline: none;
 
   &:focus {
@@ -112,7 +113,7 @@ const Actions = styled.div`
   margin-top: auto;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
   align-items: center;
 `;
 
@@ -121,20 +122,20 @@ const LinkButton = styled.button`
   background: transparent;
   padding: 0;
   font-size: 14px;
-  font-weight: 400;
+  font-weight: 500;
   color: #757575;
   cursor: pointer;
 `;
 
 const Submit = styled.button`
   width: 100%;
-  height: 40px;
+  height: 50px;
   border: 0;
-  border-radius: 6px;
+  border-radius: 8px;
   background: #1783ff;
   color: #fff;
-  font-size: 18px;
-  font-weight: 400;
+  font-size: 17px;
+  font-weight: 500;
   cursor: pointer;
 
   &:active {

@@ -10,11 +10,11 @@ const Page = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 18px 20px;
+  padding: 12px 16px;
   overflow: hidden;
 
   @media (max-width: 540px) {
-    padding: 2px;
+    padding: 0;
   }
 `;
 
@@ -40,26 +40,28 @@ const BackgroundImage = styled.img`
 
 const Card = styled.div`
   position: relative;
-  width: min(446px, 100%);
-  min-height: min(520px, calc(100vh - 36px));
-  border-radius: 34px;
-  background: rgba(232, 236, 244, 0.92);
+  width: min(710px, 100%);
+  min-height: min(1000px, calc(100vh - 24px));
+  border-radius: 60px;
+  background: rgba(235, 237, 241, 0.95);
+  border: 1px solid rgba(43, 128, 255, 0.45);
   box-shadow: 0 0 29.5px 2px rgba(0, 0, 0, 0.08);
-  padding: 32px 32px 18px;
+  padding: 92px 56px 86px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 
   @media (max-width: 540px) {
     width: 100%;
-    min-height: calc(100vh - 4px);
-    padding: 24px 30px 18px;
+    min-height: calc(100dvh - 4px);
+    border-radius: 30px;
+    padding: 44px 24px 38px;
   }
 `;
 
 const Logo = styled.div`
   text-align: center;
-  font-size: 48px;
+  font-size: 50px;
   font-weight: 800;
   letter-spacing: -0.02em;
   color: #1783ff;
@@ -68,7 +70,7 @@ const Logo = styled.div`
 const Title = styled.h1`
   margin: 0;
   text-align: center;
-  font-size: 37px;
+  font-size: 40px;
   font-weight: 700;
   color: #000;
 `;
@@ -76,8 +78,8 @@ const Title = styled.h1`
 const Form = styled.form`
   display: flex;
   flex-direction: column;
-  gap: 9px;
-  margin-top: 10px;
+  gap: 10px;
+  margin-top: 14px;
   flex: 1;
 `;
 
@@ -94,12 +96,12 @@ const LabelText = styled.span`
 `;
 
 const Input = styled.input`
-  height: 37px;
+  height: 38px;
   border-radius: 7px;
   border: 1px solid #a2a9b3;
   background: transparent;
   padding: 0 12px;
-  font-size: 16px;
+  font-size: 15px;
   outline: none;
 
   &:focus {
@@ -117,12 +119,12 @@ const Actions = styled.div`
 
 const Submit = styled.button`
   width: 100%;
-  height: 42px;
+  height: 44px;
   border: 0;
   border-radius: 7px;
   background: #1783ff;
   color: #fff;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 500;
   cursor: pointer;
 
