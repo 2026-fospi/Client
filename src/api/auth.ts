@@ -21,6 +21,7 @@ export interface TokenResponse {
 
 export interface CreateRoomRequest {
   title: string;
+  discord_user_id?: string | null;
   penalties?: string[];
   start_date?: string | null;
   end_date?: string | null;

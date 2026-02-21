@@ -315,6 +315,7 @@ function CreatePage() {
   const [joinCode, setJoinCode] = useState('123456');
   const [joinDiscordUserId, setJoinDiscordUserId] = useState('');
   const [roomTitle, setRoomTitle] = useState('FOSPI 모임');
+  const [createDiscordUserId, setCreateDiscordUserId] = useState('');
   const [startDate, setStartDate] = useState('2023-06-10');
   const [endDate, setEndDate] = useState('2023-06-10');
   const [penaltyContent, setPenaltyContent] = useState('');
@@ -391,6 +392,7 @@ function CreatePage() {
     try {
       const response = await createRoom({
         title: roomTitle.trim() || 'FOSPI 모임',
+        discord_user_id: createDiscordUserId.trim() || null,
         penalties: penaltyContent.trim() ? [penaltyContent.trim()] : [],
         start_date: toStartIso(startDate),
         end_date: toEndIso(endDate),
@@ -507,6 +509,18 @@ function CreatePage() {
                       placeholder="방 제목을 입력하세요"
                     />
                   </Field>
+
+                  {isPenaltyScreen && (
+                    <Field>
+                      <Label>디스코드 아이디</Label>
+                      <Input
+                        type="text"
+                        value={createDiscordUserId}
+                        onChange={(event) => setCreateDiscordUserId(event.target.value)}
+                        placeholder="디스코드 아이디를 입력하세요"
+                      />
+                    </Field>
+                  )}
 
                   <Field>
                     <Label>페널티 기간</Label>
