@@ -1,7 +1,6 @@
 import {useState} from 'react';
 import styled from 'styled-components';
 import Flex from '../../../components/common/Flex';
-import {FiChevronLeft} from 'react-icons/fi';
 
 const MOCK_MEMBERS = [
     {id: 'me', name: '내 주식', currentPrice: 12500, changePercent: 2.34},
@@ -52,20 +51,10 @@ const NotificationIcon = styled.span`
     line-height: 1;
 `;
 
-// ========== 자산 제목 (선택된 멤버 주식) ==========
-const AssetHeader = styled(Flex).attrs({gap: 4})`
-    padding: 16px 20px;
-    border-bottom: 1px solid #e5e7eb;
-`;
-
 const AssetHeader = styled(Flex).attrs({ row: true, verticalCenter: true })`
   justify-content: space-between;
   gap: 14px;
   flex-wrap: wrap;
-`;
-
-const AssetMeta = styled(Flex).attrs({ gap: 4 })`
-  min-width: 220px;
 `;
 
 const AssetTitle = styled.span`
@@ -459,7 +448,7 @@ function ExchangePage() {
                                             onClick={closeOrderModal}
                                             aria-label="닫기"
                                         >
-                                            <FiChevronLeft size={22}/>
+                                            ←
                                         </ModalBackBtn>
                                     </ModalHeader>
                                     <Flex gap={10}>
