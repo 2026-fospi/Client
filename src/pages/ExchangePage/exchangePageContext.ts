@@ -11,6 +11,8 @@ export interface ExchangePageContextValue {
   selectedMember: ExchangeMember;
   members: ExchangeMember[];
   filteredMembers: ExchangeMember[];
+  membersLoading: boolean;
+  membersError: string | null;
   events: ExchangeEvent[];
   formatPrice: (n: number) => string;
   formatChange: (p: number) => string;
