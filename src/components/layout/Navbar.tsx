@@ -57,7 +57,7 @@ const NavLinkStyled = styled(NavLink)`
   color: #757575;
   text-decoration: none;
   font-family: 'Pretendard', sans-serif;
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 400;
   line-height: 1;
   transition: color 0.2s;
