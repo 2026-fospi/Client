@@ -1,6 +1,6 @@
 import { Outlet } from 'react-router-dom';
 import styled from 'styled-components';
-import Flex from '../../../components/common/Flex';
+import Flex from '../common/Flex';
 import Navbar from './Navbar';
 
 const LayoutContainer = styled(Flex).attrs({
