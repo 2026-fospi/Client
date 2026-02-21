@@ -22,6 +22,7 @@ function App() {
         <Route path="/create" element={<CreatePage />} />
         <Route element={<Layout />}>
           <Route path="exchange" element={<ExchangePage />} />
+          <Route path="exchange/:roomCode" element={<ExchangePage />} />
           <Route path="room-select" element={<RoomSelectPage />} />
           <Route path="holdings" element={<HoldingsPage />} />
           <Route path="events" element={<EventsPage />} />

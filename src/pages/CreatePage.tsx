@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { createRoom, joinRoom } from '../api';
+import { createRoom, joinRoom, saveRoomCode } from '../api';
 import wallpaper from '../assets/login-wallpaper.jpg';
 
 const Viewport = styled.div`
@@ -359,7 +359,8 @@ function CreatePage() {
 
       try {
         await joinRoom({ room_code: joinCode.trim() });
-        navigate('/exchange');
+        saveRoomCode(joinCode.trim());
+        navigate(`/exchange/${joinCode.trim()}`);
       } catch (error) {
         const message = error instanceof Error ? error.message : '방 참여 중 오류가 발생했습니다.';
         setErrorMessage(message);
@@ -385,6 +386,7 @@ function CreatePage() {
         end_date: toEndIso(endDate),
       });
 
+      saveRoomCode(response.room_code);
       setGeneratedCode(response.room_code);
       setCreateStep('code');
     } catch (error) {
@@ -414,7 +416,7 @@ function CreatePage() {
             디스코드 봇을 추가해주세요
           </DiscordLink>
           <CodeValue>{generatedCode}</CodeValue>
-          <StartButton type="button" onClick={() => navigate('/room-select')}>
+          <StartButton type="button" onClick={() => navigate(`/exchange/${generatedCode}`)}>
             시작하기
           </StartButton>
         </CodeCard>

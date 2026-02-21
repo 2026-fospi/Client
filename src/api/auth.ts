@@ -1,6 +1,7 @@
 import { request } from './http';
 
 export const ACCESS_TOKEN_KEY = 'fospi_access_token';
+export const ROOM_CODE_KEY = 'fospi_room_code';
 
 export interface LoginRequest {
   email: string;
@@ -65,6 +66,14 @@ export function saveAccessToken(token: string): void {
 
 export function getAccessToken(): string | null {
   return localStorage.getItem(ACCESS_TOKEN_KEY);
+}
+
+export function saveRoomCode(roomCode: string): void {
+  localStorage.setItem(ROOM_CODE_KEY, roomCode);
+}
+
+export function getRoomCode(): string | null {
+  return localStorage.getItem(ROOM_CODE_KEY);
 }
 
 function authHeader(token: string): Record<string, string> {

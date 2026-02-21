@@ -1,29 +1,71 @@
-import { useState } from 'react';
+import {useState, useEffect, useRef} from 'react';
 import styled from 'styled-components';
+import {createChart, CandlestickSeries} from 'lightweight-charts';
 import Flex from '../../../components/common/Flex';
-import { useExchangePage } from './exchangePageContext';
-import { buyStock, sellStock } from '../../api/stock';
+import {FiChevronLeft} from 'react-icons/fi';
+import {getStockDetail} from '../../api/stock';
+import type {StockHistoryPoint} from '../../api/stock';
+import {useExchangePage} from './exchangePageContext';
+import {buyStock, sellStock} from '../../api/stock';
 
 const ChartSection = styled(Flex).attrs({flex: 1})`
+    padding: 0 50px;
     min-height: 360px;
-    padding: 16px 50px;
     background: #fff;
     border-bottom: 1px solid #e5e7eb;
+    position: relative;
 `;
 
-const ChartPlaceholder = styled.div`
+const ChartWrap = styled.div`
     width: 100%;
-    height: 100%;
-    min-height: 320px;
-    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
-    border: 1px solid #e2e8f0;
+    height: 320px;
     border-radius: 8px;
+    overflow: hidden;
+`;
+
+const ChartOverlay = styled.div`
+    position: absolute;
+    inset: 16px 50px 0;
+    height: 320px;
+    border-radius: 8px;
+    background: rgba(248, 250, 252, 0.95);
     display: flex;
     align-items: center;
     justify-content: center;
     color: #94a3b8;
     font-size: 14px;
 `;
+
+
+type CandlePoint = { time: string; open: number; high: number; low: number; close: number };
+
+/** history를 일별로 묶어 OHLC 캔들 데이터로 변환 (time = yyyy-MM-dd) */
+function historyToCandles(history: StockHistoryPoint[]): CandlePoint[] {
+    if (!history || history.length === 0) return [];
+    const sorted = [...history].sort(
+        (a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime()
+    );
+    const byDay = new Map<string, number[]>();
+    for (const p of sorted) {
+        const d = new Date(p.recorded_at);
+        const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+        if (!byDay.has(key)) byDay.set(key, []);
+        byDay.get(key)!.push(parseFloat(p.price));
+    }
+    const result: CandlePoint[] = [];
+    const keys = Array.from(byDay.keys()).sort();
+    for (const key of keys) {
+        const prices = byDay.get(key)!;
+        result.push({
+            time: key,
+            open: prices[0]!,
+            high: Math.max(...prices),
+            low: Math.min(...prices),
+            close: prices[prices.length - 1]!,
+        });
+    }
+    return result;
+}
 
 const OrderSection = styled(Flex).attrs({row: true, gap: 16, flexEnd: true})`
     padding: 20px 50px;
@@ -163,31 +205,88 @@ const ModalSubmitBtn = styled.button<{ $disabled?: boolean }>`
     font-size: 15px;
     font-weight: 600;
     color: #fff;
-    background: ${({ $disabled }) => ($disabled ? '#94a3b8' : '#3b82f6')};
+    background: ${({$disabled}) => ($disabled ? '#94a3b8' : '#3b82f6')};
     border: none;
     border-radius: 8px;
-    cursor: ${({ $disabled }) => ($disabled ? 'not-allowed' : 'pointer')};
+    cursor: ${({$disabled}) => ($disabled ? 'not-allowed' : 'pointer')};
 
     &:hover {
-        opacity: ${({ $disabled }) => ($disabled ? 1 : 0.9)};
+        opacity: ${({$disabled}) => ($disabled ? 1 : 0.9)};
     }
 `;
 
 const ModalMessage = styled.div<{ $error?: boolean }>`
     font-size: 13px;
     margin-top: 8px;
-    color: ${({ $error }) => ($error ? '#dc2626' : '#16a34a')};
+    color: ${({$error}) => ($error ? '#dc2626' : '#16a34a')};
 `;
 
 type OrderModalType = 'buy' | 'sell' | null;
 
 export default function QuoteTab() {
-    const { selectedMember, selectedMemberId, formatPrice } = useExchangePage();
+    const {selectedMember, selectedMemberId, formatPrice} = useExchangePage();
     const [orderModal, setOrderModal] = useState<OrderModalType>(null);
     const [modalQuantity, setModalQuantity] = useState('');
     const [modalTotal, setModalTotal] = useState('');
     const [submitLoading, setSubmitLoading] = useState(false);
     const [modalMessage, setModalMessage] = useState<{ text: string; error: boolean } | null>(null);
+    const [chartLoading, setChartLoading] = useState(true);
+    const [chartError, setChartError] = useState<string | null>(null);
+    const [candleData, setCandleData] = useState<CandlePoint[]>([]);
+    const chartContainerRef = useRef<HTMLDivElement>(null);
+    const chartRef = useRef<ReturnType<typeof createChart> | null>(null);
+    const seriesRef = useRef<{ setData: (data: CandlePoint[]) => void } | null>(null);
+
+    useEffect(() => {
+        const stockId = Number(selectedMemberId);
+        if (Number.isNaN(stockId) || selectedMemberId === '') {
+            setCandleData([]);
+            setChartLoading(false);
+            setChartError(null);
+            return;
+        }
+        setChartLoading(true);
+        setChartError(null);
+        getStockDetail(stockId)
+            .then((res) => {
+                setCandleData(historyToCandles(res.history ?? []));
+            })
+            .catch((e) => {
+                setChartError(e instanceof Error ? e.message : '차트 데이터를 불러오지 못했습니다.');
+                setCandleData([]);
+            })
+            .finally(() => setChartLoading(false));
+    }, [selectedMemberId]);
+
+    useEffect(() => {
+        if (!chartContainerRef.current) return;
+        const chart = createChart(chartContainerRef.current, {
+            layout: {background: {color: '#fff'}, textColor: '#334155'},
+            grid: {vertLines: {color: '#f1f5f9'}, horzLines: {color: '#f1f5f9'}},
+            width: chartContainerRef.current.clientWidth,
+            height: 320,
+            timeScale: {timeVisible: true, secondsVisible: false},
+            rightPriceScale: {borderColor: '#e2e8f0'},
+        });
+        const series = chart.addSeries(CandlestickSeries, {
+            upColor: '#ef4444',
+            downColor: '#2563eb',
+            borderUpColor: '#ef4444',
+            borderDownColor: '#2563eb',
+        }) as unknown as { setData: (data: CandlePoint[]) => void };
+        chartRef.current = chart;
+        seriesRef.current = series;
+        return () => {
+            chart.remove();
+            chartRef.current = null;
+            seriesRef.current = null;
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!seriesRef.current) return;
+        if (candleData.length > 0) seriesRef.current.setData(candleData);
+    }, [candleData]);
 
     const openOrderModal = (type: 'buy' | 'sell') => {
         setOrderModal(type);
@@ -206,18 +305,18 @@ export default function QuoteTab() {
         setModalMessage(null);
         const qty = Math.floor(Number(modalQuantity));
         if (!qty || qty < 1) {
-            setModalMessage({ text: '주문수량을 입력해 주세요.', error: true });
+            setModalMessage({text: '주문수량을 입력해 주세요.', error: true});
             return;
         }
         const stockUserId = Number(selectedMember.id);
         if (Number.isNaN(stockUserId)) {
-            setModalMessage({ text: '유효하지 않은 주식입니다.', error: true });
+            setModalMessage({text: '유효하지 않은 주식입니다.', error: true});
             return;
         }
         setSubmitLoading(true);
         try {
-            await buyStock({ quantity: qty, stock_user_id: stockUserId });
-            setModalMessage({ text: '매수가 완료되었습니다.', error: false });
+            await buyStock({quantity: qty, stock_user_id: stockUserId});
+            setModalMessage({text: '매수가 완료되었습니다.', error: false});
             setModalQuantity('');
             setModalTotal('');
             setTimeout(() => closeOrderModal(), 1500);
@@ -226,7 +325,7 @@ export default function QuoteTab() {
                 e instanceof Error
                     ? e.message
                     : '매수 요청에 실패했습니다.';
-            setModalMessage({ text: msg, error: true });
+            setModalMessage({text: msg, error: true});
         } finally {
             setSubmitLoading(false);
         }
@@ -236,18 +335,18 @@ export default function QuoteTab() {
         setModalMessage(null);
         const qty = Math.floor(Number(modalQuantity));
         if (!qty || qty < 1) {
-            setModalMessage({ text: '주문수량을 입력해 주세요.', error: true });
+            setModalMessage({text: '주문수량을 입력해 주세요.', error: true});
             return;
         }
         const stockUserId = Number(selectedMember.id);
         if (Number.isNaN(stockUserId)) {
-            setModalMessage({ text: '유효하지 않은 주식입니다.', error: true });
+            setModalMessage({text: '유효하지 않은 주식입니다.', error: true});
             return;
         }
         setSubmitLoading(true);
         try {
-            await sellStock({ quantity: qty, stock_user_id: stockUserId });
-            setModalMessage({ text: '매도가 완료되었습니다.', error: false });
+            await sellStock({quantity: qty, stock_user_id: stockUserId});
+            setModalMessage({text: '매도가 완료되었습니다.', error: false});
             setModalQuantity('');
             setModalTotal('');
             setTimeout(() => closeOrderModal(), 1500);
@@ -256,7 +355,7 @@ export default function QuoteTab() {
                 e instanceof Error
                     ? e.message
                     : '매도 요청에 실패했습니다.';
-            setModalMessage({ text: msg, error: true });
+            setModalMessage({text: msg, error: true});
         } finally {
             setSubmitLoading(false);
         }
@@ -264,10 +363,12 @@ export default function QuoteTab() {
 
     return (
         <>
-            <ChartSection>
-                <ChartPlaceholder>
-                    {selectedMemberId === 'me' ? '내 차트' : `${selectedMember.name} 차트`} · 연동 후 실제 차트가 표시됩니다.
-                </ChartPlaceholder>
+            <ChartSection center>
+                <ChartWrap ref={chartContainerRef}/>
+                {chartLoading && <ChartOverlay>차트 로딩 중...</ChartOverlay>}
+                {!chartLoading && chartError && (
+                    <ChartOverlay style={{color: '#dc2626'}}>{chartError}</ChartOverlay>
+                )}
             </ChartSection>
 
             <OrderSection>
@@ -284,7 +385,7 @@ export default function QuoteTab() {
                     <ModalPanel onClick={(e) => e.stopPropagation()}>
                         <ModalHeader>
                             <ModalBackBtn type="button" onClick={closeOrderModal} aria-label="닫기">
-                                ←
+                                <FiChevronLeft size={22}/>
                             </ModalBackBtn>
                         </ModalHeader>
                         <Flex gap={10}>

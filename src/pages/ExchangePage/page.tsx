@@ -1,3 +1,5 @@
+import { useParams } from 'react-router-dom';
+import { getRoomCode } from '../../api/auth';
 import styled from 'styled-components';
 import Flex from '../../../components/common/Flex';
 import {ExchangePageProvider} from './context';
@@ -228,8 +230,10 @@ function ExchangePageContent() {
 }
 
 export default function ExchangePage() {
+    const { roomCode: roomCodeFromUrl } = useParams<{ roomCode?: string }>();
+    const roomCode = roomCodeFromUrl ?? getRoomCode();
     return (
-        <ExchangePageProvider>
+        <ExchangePageProvider roomCode={roomCode ?? undefined}>
             <ExchangePageContent/>
         </ExchangePageProvider>
     );

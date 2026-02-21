@@ -265,7 +265,7 @@ function HoldingsPage() {
         <Flex row gap={24}>
           <Flex gap={10}>
             <SummaryLabel>총 보유자산</SummaryLabel>
-            <SummaryValue>{formatKrw(cash)}</SummaryValue>
+            <SummaryValue>{formatKrw(totalAsset)}</SummaryValue>
           </Flex>
         </Flex>
         <Flex flex={1} center>

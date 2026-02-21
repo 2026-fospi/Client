@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { TabId, ExchangeMember } from './constants';
 import { MOCK_EVENTS } from './constants';
-import { getStocks } from '../../api/stock';
-import type { StockListItem } from '../../api/stock';
+import { getStocksByRoom } from '../../api/stock';
+import type { RoomStockMember } from '../../api/stock';
 import { ExchangePageContext } from './exchangePageContext';
 
-function mapStockToMember(item: StockListItem): ExchangeMember {
+function mapStockToMember(item: RoomStockMember): ExchangeMember {
   return {
     id: String(item.user_id),
     name: item.name,
@@ -21,7 +21,13 @@ const FALLBACK_MEMBER: ExchangeMember = {
   changePercent: 0,
 };
 
-export function ExchangePageProvider({ children }: { children: React.ReactNode }) {
+export function ExchangePageProvider({
+  children,
+  roomCode,
+}: {
+  children: React.ReactNode;
+  roomCode?: string;
+}) {
   const [activeTab, setActiveTab] = useState<TabId>('quote');
   const [selectedMemberId, setSelectedMemberId] = useState<string>('');
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -30,13 +36,20 @@ export function ExchangePageProvider({ children }: { children: React.ReactNode }
   const [membersError, setMembersError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!roomCode?.trim()) {
+      setMembers([]);
+      setMembersLoading(false);
+      setMembersError(null);
+      return;
+    }
+
     let cancelled = false;
 
     async function fetchStocks() {
       setMembersLoading(true);
       setMembersError(null);
       try {
-        const list = await getStocks();
+        const list = await getStocksByRoom(roomCode!);
         if (cancelled) return;
         const mapped = list.map(mapStockToMember);
         setMembers(mapped);
@@ -56,7 +69,7 @@ export function ExchangePageProvider({ children }: { children: React.ReactNode }
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [roomCode]);
 
   const selectedMember = useMemo(() => {
     const found = members.find((m) => m.id === selectedMemberId);

@@ -10,6 +10,7 @@ export interface ExchangeMember {
 export interface ExchangeEvent {
   id: string;
   dateTime: string;
+  content: string;
   type: string;
   priceChange: string;
 }
@@ -23,7 +24,7 @@ export const MOCK_MEMBERS: ExchangeMember[] = [
 ];
 
 export const MOCK_EVENTS: ExchangeEvent[] = [
-  { id: '1', dateTime: '2026-02-21 14:32', type: '이벤트', priceChange: '+1,200' },
-  { id: '2', dateTime: '2026-02-21 14:28', type: '채팅', priceChange: '-500' },
-  { id: '3', dateTime: '2026-02-21 14:15', type: '이벤트', priceChange: '+800' },
+  { id: '1', dateTime: '2026-02-21 14:32', content: "홍길동, 독보적 활약으로 주가 급등!", type: '이벤트', priceChange: '+1,200' },
+  { id: '2', dateTime: '2026-02-21 14:28', content: "홍길동, 독보적 활약으로 주가 급등!", type: '채팅', priceChange: '-500' },
+  { id: '3', dateTime: '2026-02-21 14:15', content: "홍길동, 독보적 활약으로 주가 급등!", type: '이벤트', priceChange: '+800' },
 ];
