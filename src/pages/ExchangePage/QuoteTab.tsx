@@ -1,7 +1,8 @@
-import {useState} from 'react';
+import { useState } from 'react';
 import styled from 'styled-components';
 import Flex from '../../../components/common/Flex';
-import {useExchangePage} from './exchangePageContext';
+import { useExchangePage } from './exchangePageContext';
+import { buyStock, sellStock } from '../../api/stock';
 
 const ChartSection = styled(Flex).attrs({flex: 1})`
     min-height: 360px;
@@ -157,38 +158,108 @@ const ModalSubmitWrap = styled(Flex)`
     margin-top: 24px;
 `;
 
-const ModalSubmitBtn = styled.button`
+const ModalSubmitBtn = styled.button<{ $disabled?: boolean }>`
     padding: 12px 28px;
     font-size: 15px;
     font-weight: 600;
     color: #fff;
-    background: #3b82f6;
+    background: ${({ $disabled }) => ($disabled ? '#94a3b8' : '#3b82f6')};
     border: none;
     border-radius: 8px;
-    cursor: pointer;
+    cursor: ${({ $disabled }) => ($disabled ? 'not-allowed' : 'pointer')};
 
     &:hover {
-        opacity: 0.9;
+        opacity: ${({ $disabled }) => ($disabled ? 1 : 0.9)};
     }
+`;
+
+const ModalMessage = styled.div<{ $error?: boolean }>`
+    font-size: 13px;
+    margin-top: 8px;
+    color: ${({ $error }) => ($error ? '#dc2626' : '#16a34a')};
 `;
 
 type OrderModalType = 'buy' | 'sell' | null;
 
 export default function QuoteTab() {
-    const {selectedMember, selectedMemberId, formatPrice} = useExchangePage();
+    const { selectedMember, selectedMemberId, formatPrice } = useExchangePage();
     const [orderModal, setOrderModal] = useState<OrderModalType>(null);
     const [modalQuantity, setModalQuantity] = useState('');
     const [modalTotal, setModalTotal] = useState('');
+    const [submitLoading, setSubmitLoading] = useState(false);
+    const [modalMessage, setModalMessage] = useState<{ text: string; error: boolean } | null>(null);
 
     const openOrderModal = (type: 'buy' | 'sell') => {
         setOrderModal(type);
         setModalQuantity('');
         setModalTotal('');
+        setModalMessage(null);
     };
     const closeOrderModal = () => {
         setOrderModal(null);
         setModalQuantity('');
         setModalTotal('');
+        setModalMessage(null);
+    };
+
+    const handleBuySubmit = async () => {
+        setModalMessage(null);
+        const qty = Math.floor(Number(modalQuantity));
+        if (!qty || qty < 1) {
+            setModalMessage({ text: '주문수량을 입력해 주세요.', error: true });
+            return;
+        }
+        const stockUserId = Number(selectedMember.id);
+        if (Number.isNaN(stockUserId)) {
+            setModalMessage({ text: '유효하지 않은 주식입니다.', error: true });
+            return;
+        }
+        setSubmitLoading(true);
+        try {
+            await buyStock({ quantity: qty, stock_user_id: stockUserId });
+            setModalMessage({ text: '매수가 완료되었습니다.', error: false });
+            setModalQuantity('');
+            setModalTotal('');
+            setTimeout(() => closeOrderModal(), 1500);
+        } catch (e) {
+            const msg =
+                e instanceof Error
+                    ? e.message
+                    : '매수 요청에 실패했습니다.';
+            setModalMessage({ text: msg, error: true });
+        } finally {
+            setSubmitLoading(false);
+        }
+    };
+
+    const handleSellSubmit = async () => {
+        setModalMessage(null);
+        const qty = Math.floor(Number(modalQuantity));
+        if (!qty || qty < 1) {
+            setModalMessage({ text: '주문수량을 입력해 주세요.', error: true });
+            return;
+        }
+        const stockUserId = Number(selectedMember.id);
+        if (Number.isNaN(stockUserId)) {
+            setModalMessage({ text: '유효하지 않은 주식입니다.', error: true });
+            return;
+        }
+        setSubmitLoading(true);
+        try {
+            await sellStock({ quantity: qty, stock_user_id: stockUserId });
+            setModalMessage({ text: '매도가 완료되었습니다.', error: false });
+            setModalQuantity('');
+            setModalTotal('');
+            setTimeout(() => closeOrderModal(), 1500);
+        } catch (e) {
+            const msg =
+                e instanceof Error
+                    ? e.message
+                    : '매도 요청에 실패했습니다.';
+            setModalMessage({ text: msg, error: true });
+        } finally {
+            setSubmitLoading(false);
+        }
     };
 
     return (
@@ -281,8 +352,20 @@ export default function QuoteTab() {
                                 />
                             </ModalFieldRow>
                         </Flex>
+                        {modalMessage && (
+                            <ModalMessage $error={modalMessage.error}>{modalMessage.text}</ModalMessage>
+                        )}
                         <ModalSubmitWrap>
-                            <ModalSubmitBtn type="button">{orderModal === 'buy' ? '매수' : '매도'}</ModalSubmitBtn>
+                            <ModalSubmitBtn
+                                type="button"
+                                $disabled={submitLoading}
+                                onClick={() => {
+                                    if (orderModal === 'buy') handleBuySubmit();
+                                    else handleSellSubmit();
+                                }}
+                            >
+                                {submitLoading ? '처리 중...' : orderModal === 'buy' ? '매수' : '매도'}
+                            </ModalSubmitBtn>
                         </ModalSubmitWrap>
                     </ModalPanel>
                 </ModalOverlay>
