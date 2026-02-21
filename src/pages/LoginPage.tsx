@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { login, saveAccessToken } from '../api';
+import AuthBox from '../components/auth/AuthBox';
 import wallpaper from '../assets/login-wallpaper.jpg';
 
 const Page = styled.div`
@@ -38,16 +39,7 @@ const BackgroundImage = styled.img`
   user-select: none;
 `;
 
-const Card = styled.div`
-  position: relative;
-  width: min(710px, 100%);
-  min-height: min(1000px, calc(100vh - 24px));
-  border-radius: 60px;
-  background: rgba(229, 236, 246, 0.88);
-  backdrop-filter: saturate(160%) blur(8px);
-  padding: 92px 56px 86px;
-  display: flex;
-  flex-direction: column;
+const Card = styled(AuthBox)`
   gap: 20px;
 
   @media (max-width: 540px) {

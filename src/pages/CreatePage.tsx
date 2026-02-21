@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { createRoom, joinRoom, saveRoomCode, saveRoomEndDate } from '../api';
+import AuthBox from '../components/auth/AuthBox';
 import wallpaper from '../assets/login-wallpaper.jpg';
 
 const Viewport = styled.div`
@@ -36,44 +37,35 @@ const BackgroundImage = styled.img`
   user-select: none;
 `;
 
-const Card = styled.div<{ $scale: number }>`
+const Card = styled(AuthBox)<{ $scale: number }>`
   position: absolute;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%) scale(${({ $scale }) => $scale});
   transform-origin: center center;
-  width: 893px;
-  height: 1000px;
-  border-radius: 60px;
-  background: #ffffff;
-  box-shadow: 0 0 29.5px 2px rgba(0, 0, 0, 0.08);
-  padding: 92px 80px 86px;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
+  width: 780px;
+  min-height: 860px;
+  padding: 68px 56px 54px;
 `;
 
-const CodeCard = styled.div<{ $scale: number }>`
+const CodeCard = styled(AuthBox)<{ $scale: number }>`
   position: absolute;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%) scale(${({ $scale }) => $scale});
   transform-origin: center center;
-  width: 953px;
-  height: 512px;
-  border-radius: 60px;
-  background: #ffffff;
+  width: 820px;
+  min-height: 440px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 56px;
-  box-sizing: border-box;
+  padding-top: 44px;
 `;
 
 const Logo = styled.div`
   font-family: 'Hakgyoansim Allimjang OTF', 'Pretendard', sans-serif;
   text-align: center;
-  font-size: 58px;
+  font-size: 48px;
   line-height: 1;
   font-weight: 700;
   color: #1783ff;
@@ -81,10 +73,10 @@ const Logo = styled.div`
 
 const Title = styled.h1`
   margin: 0;
-  margin-top: 26px;
+  margin-top: 18px;
   font-family: 'Pretendard', sans-serif;
   text-align: center;
-  font-size: 40px;
+  font-size: 34px;
   line-height: 1.2;
   font-weight: 600;
   color: #000;
@@ -92,20 +84,20 @@ const Title = styled.h1`
 
 const Description = styled.p`
   margin: 0;
-  margin-top: 12px;
+  margin-top: 8px;
   font-family: 'Pretendard', sans-serif;
   text-align: center;
-  font-size: 20px;
+  font-size: 17px;
   font-weight: 500;
   line-height: 1.35;
   color: #585858;
 `;
 
 const Form = styled.form`
-  margin-top: 44px;
+  margin-top: 28px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 18px;
 `;
 
 const Center = styled.div`
@@ -133,12 +125,12 @@ const ModeTabs = styled.div`
 `;
 
 const ModeTab = styled.button<{ $active?: boolean }>`
-  height: 74px;
+  height: 62px;
   border: none;
   background: ${({ $active }) => ($active ? '#1783ff' : '#e2f2ff')};
   color: ${({ $active }) => ($active ? '#ffffff' : '#757575')};
   font-family: 'Pretendard', sans-serif;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 500;
   cursor: pointer;
 `;
@@ -151,19 +143,19 @@ const Field = styled.label`
 
 const Label = styled.span`
   font-family: 'Pretendard', sans-serif;
-  font-size: 24px;
+  font-size: 19px;
   font-weight: 500;
   color: #000000;
 `;
 
 const Input = styled.input`
-  height: 74px;
+  height: 58px;
   border-radius: 12px;
   border: 1px solid #757575;
   background: #ffffff;
-  padding: 0 24px;
+  padding: 0 18px;
   font-family: 'Pretendard', sans-serif;
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 500;
   color: #000000;
   outline: none;
@@ -178,24 +170,24 @@ const Input = styled.input`
 const DateRange = styled.div`
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 14px;
 `;
 
 const DateInput = styled(Input)`
-  width: 244px;
+  width: 196px;
   text-align: center;
   padding: 0 10px;
 `;
 
 const Tilde = styled.span`
   font-family: 'Pretendard', sans-serif;
-  font-size: 32px;
+  font-size: 24px;
   line-height: 1;
   color: #000000;
 `;
 
 const ActionRow = styled.div`
-  margin-top: 17px;
+  margin-top: 10px;
   width: min(497px, 100%);
   margin-left: auto;
   margin-right: auto;
@@ -210,13 +202,13 @@ const WideActionRow = styled(ActionRow)`
 
 const Submit = styled.button`
   width: 100%;
-  height: 82px;
+  height: 64px;
   border: 0;
   border-radius: 12px;
   background: #1783ff;
   color: #fff;
   font-family: 'Pretendard', sans-serif;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 500;
   cursor: pointer;
 
@@ -235,47 +227,47 @@ const CodeBrand = styled.p`
 `;
 
 const CodeLabel = styled.p`
-  margin: 36px 0 0;
+  margin: 24px 0 0;
   font-family: 'Pretendard', sans-serif;
   color: #000000;
-  font-size: 26px;
+  font-size: 22px;
   font-weight: 600;
   line-height: 1;
 `;
 
 const DiscordLink = styled.button`
-  margin-top: 56px;
+  margin-top: 36px;
   border: none;
   background: transparent;
   padding: 0;
   font-family: 'Pretendard', sans-serif;
   color: #40a6ff;
-  font-size: 20px;
+  font-size: 17px;
   font-weight: 500;
   text-decoration: underline;
   cursor: pointer;
 `;
 
 const CodeValue = styled.p`
-  margin: 24px 0 0;
+  margin: 18px 0 0;
   font-family: 'Pretendard', sans-serif;
   color: #000000;
-  font-size: 46px;
+  font-size: 40px;
   font-weight: 700;
   line-height: 1;
   letter-spacing: 0.06em;
 `;
 
 const StartButton = styled.button`
-  margin-top: 72px;
-  width: 199px;
-  height: 56px;
+  margin-top: 50px;
+  width: 180px;
+  height: 50px;
   border: none;
   border-radius: 12px;
   background: #e2f2ff;
   font-family: 'Pretendard', sans-serif;
   color: #000000;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
 `;
@@ -512,15 +504,17 @@ function CreatePage() {
                     />
                   </Field>
 
-                  <Field>
-                    <Label>디스코드 아이디</Label>
-                    <Input
-                      type="text"
-                      value={createDiscordUserId}
-                      onChange={(event) => setCreateDiscordUserId(event.target.value)}
-                      placeholder="디스코드 아이디를 입력하세요"
-                    />
-                  </Field>
+                  {isPenaltyScreen && (
+                    <Field>
+                      <Label>디스코드 아이디</Label>
+                      <Input
+                        type="text"
+                        value={createDiscordUserId}
+                        onChange={(event) => setCreateDiscordUserId(event.target.value)}
+                        placeholder="디스코드 아이디를 입력하세요"
+                      />
+                    </Field>
+                  )}
 
                   <Field>
                     <Label>페널티 기간</Label>

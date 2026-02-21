@@ -78,10 +78,13 @@ export function getRoomCode(): string | null {
   return localStorage.getItem(ROOM_CODE_KEY);
 }
 
-export function saveRoomEndDate(isoEndDate: string | null | undefined): void {
-  if (isoEndDate != null && isoEndDate !== '') {
-    localStorage.setItem(ROOM_END_DATE_KEY, isoEndDate);
+export function saveRoomEndDate(endDate?: string | null): void {
+  if (!endDate) {
+    localStorage.removeItem(ROOM_END_DATE_KEY);
+    return;
   }
+
+  localStorage.setItem(ROOM_END_DATE_KEY, endDate);
 }
 
 export function getRoomEndDate(): string | null {
