@@ -14,7 +14,7 @@ const Nav = styled(Flex)`
   z-index: 10;
   background: #ffffff;
   border-bottom: 1px solid #f0f0f0;
-  height: 84px;
+  height: 64px;
 `;
 
 const Inner = styled.div`
@@ -30,7 +30,7 @@ const Inner = styled.div`
 
 const Logo = styled.span`
   font-family: 'Hakgyoansim Allimjang OTF', 'Pretendard', sans-serif;
-  font-size: 26px;
+  font-size: 22px;
   color: #1783ff;
   line-height: 1;
   font-weight: 700;
@@ -57,7 +57,7 @@ const NavLinkStyled = styled(NavLink)`
   color: #757575;
   text-decoration: none;
   font-family: 'Pretendard', sans-serif;
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 400;
   line-height: 1;
   transition: color 0.2s;
@@ -72,7 +72,7 @@ const NavLinkStyled = styled(NavLink)`
   }
 
   @media (max-width: 900px) {
-    font-size: 17px;
+    font-size: 15px;
   }
 `;
 

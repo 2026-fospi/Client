@@ -274,6 +274,9 @@ const StartButton = styled.button`
   cursor: pointer;
 `;
 
+const DISCORD_BOT_INVITE_URL =
+  'https://discord.com/oauth2/authorize?client_id=1474719711676731452&permissions=66624&integration_type=0&scope=bot';
+
 const ErrorMessage = styled.p`
   margin: 0;
   text-align: center;
@@ -402,7 +405,12 @@ function CreatePage() {
         <CodeCard $scale={scale}>
           <CodeBrand>FOSPI</CodeBrand>
           <CodeLabel>참여 코드</CodeLabel>
-          <DiscordLink type="button">디스코드 봇을 추가해주세요</DiscordLink>
+          <DiscordLink
+            type="button"
+            onClick={() => window.open(DISCORD_BOT_INVITE_URL, '_blank', 'noopener,noreferrer')}
+          >
+            디스코드 봇을 추가해주세요
+          </DiscordLink>
           <CodeValue>{generatedCode}</CodeValue>
           <StartButton type="button" onClick={() => navigate('/exchange')}>
             시작하기
