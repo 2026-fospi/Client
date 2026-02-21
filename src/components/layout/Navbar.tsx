@@ -4,7 +4,7 @@ import Flex from '../common/Flex';
 import Text from '../common/Text';
 
 const navItems = [
-  { to: '/', label: '거래소' },
+  { to: '/exchange', label: '거래소' },
   { to: '/holdings', label: '보유 자산' },
   { to: '/events', label: '이벤트' },
   { to: '/mypage', label: '마이페이지' },
@@ -64,7 +64,7 @@ function Navbar() {
             <NavLinkStyled
               to={to}
               className={({ isActive }) => (isActive ? 'active' : '')}
-              end={to === '/'}
+              end={to === '/exchange'}
             >
               <Text>{label}</Text>
             </NavLinkStyled>
