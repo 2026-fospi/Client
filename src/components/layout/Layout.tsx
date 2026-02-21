@@ -11,9 +11,7 @@ const LayoutContainer = styled(Flex).attrs({
 `;
 
 const Content = styled(Flex).attrs({ flex: 1 })`
-  max-width: 1280px;
   margin: 0 auto;
-  padding: 1.5rem 2rem;
   width: 100%;
   box-sizing: border-box;
 `;
