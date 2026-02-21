@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { login, saveAccessToken } from '../api';
 import wallpaper from '../assets/login-wallpaper.jpg';
 
 const Page = styled.div`
@@ -164,6 +165,8 @@ function LoginPage() {
     setIsSubmitting(true);
 
     try {
+      const response = await login({ email, password });
+      saveAccessToken(response.access_token);
       navigate('/create');
     } catch (error) {
       const message = error instanceof Error ? error.message : '로그인 중 오류가 발생했습니다.';

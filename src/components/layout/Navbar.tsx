@@ -1,77 +1,100 @@
 import { NavLink } from 'react-router-dom';
 import styled from 'styled-components';
 import Flex from '../common/Flex';
-import Text from '../common/Text';
 
 const navItems = [
   { to: '/exchange', label: '거래소' },
   { to: '/holdings', label: '보유 자산' },
   { to: '/events', label: '이벤트' },
-  { to: '/mypage', label: '마이페이지' },
 ] as const;
 
 const Nav = styled(Flex)`
   position: sticky;
   top: 0;
   z-index: 10;
-  background: var(--surface);
-  border-bottom: 1px solid var(--line);
-  padding: 0.75rem 0;
-  backdrop-filter: saturate(180%) blur(8px);
+  background: #ffffff;
+  border-bottom: 1px solid #f0f0f0;
+  height: 84px;
 `;
 
-const List = styled(Flex).attrs({
+const Inner = styled.div`
+  position: relative;
+  width: min(1735px, 100%);
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 40px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+`;
+
+const Logo = styled.span`
+  font-family: 'Hakgyoansim Allimjang OTF', 'Pretendard', sans-serif;
+  font-size: 26px;
+  color: #1783ff;
+  line-height: 1;
+  font-weight: 700;
+`;
+
+const List = styled(Flex).attrs<{ $itemCount: number }>({
   row: true,
-  gap: 8,
+  gap: 71,
   verticalCenter: true,
 })`
   list-style: none;
   margin: 0;
   padding: 0;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+
+  @media (max-width: 900px) {
+    gap: 28px;
+  }
 `;
 
 const NavLinkStyled = styled(NavLink)`
-  padding: 0.5rem 1rem;
-  color: var(--text-muted);
+  color: #757575;
   text-decoration: none;
-  border-radius: 6px;
-  transition: background-color 0.2s, color 0.2s;
-    
+  font-family: 'Pretendard', sans-serif;
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1;
+  transition: color 0.2s;
+
   &:hover {
-    color: var(--text);
-    background: var(--surface-2);
+    color: #333333;
   }
 
   &.active {
-    color: var(--text);
+    color: #000000;
     font-weight: 500;
-    background: var(--surface-2);
+  }
+
+  @media (max-width: 900px) {
+    font-size: 17px;
   }
 `;
 
 function Navbar() {
   return (
     <Nav>
-      <Flex width="100%" maxWidth={1280} padding="0 2rem" row verticalCenter>
-        <Flex flex={1} row verticalCenter gap={12}>
-          <Text as="span" weight={700} size={16} style={{ letterSpacing: '-0.02em' }}>
-            fospi
-          </Text>
-        </Flex>
-        <List as="ul">
-        {navItems.map(({ to, label }) => (
-          <li key={to}>
-            <NavLinkStyled
-              to={to}
-              className={({ isActive }) => (isActive ? 'active' : '')}
-              end={to === '/exchange'}
-            >
-              <Text>{label}</Text>
-            </NavLinkStyled>
-          </li>
-        ))}
+      <Inner>
+        <Logo>FOSPI</Logo>
+        <List as="ul" $itemCount={navItems.length}>
+          {navItems.map(({ to, label }) => (
+            <li key={to}>
+              <NavLinkStyled
+                to={to}
+                className={({ isActive }) => (isActive ? 'active' : '')}
+                end={to === '/exchange'}
+              >
+                {label}
+              </NavLinkStyled>
+            </li>
+          ))}
         </List>
-      </Flex>
+      </Inner>
     </Nav>
   );
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { login, saveAccessToken } from '../../api';
 import Flex from '../../../components/common/Flex';
 
 const Page = styled(Flex).attrs({
@@ -131,15 +132,19 @@ function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: 로그인 API 연동
+    if (!email || !password) {
+      return;
+    }
+
+    const response = await login({ email, password });
+    saveAccessToken(response.access_token);
     navigate('/exchange');
   };
 
   const handleSignUp = () => {
-    // TODO: 회원가입 페이지로 이동
-    navigate('/exchange');
+    navigate('/signup');
   };
 
   return (

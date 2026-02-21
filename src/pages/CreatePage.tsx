@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { createRoom, joinRoom } from '../api';
 import wallpaper from '../assets/login-wallpaper.jpg';
 
 const Viewport = styled.div`
@@ -273,6 +274,30 @@ const StartButton = styled.button`
   cursor: pointer;
 `;
 
+const ErrorMessage = styled.p`
+  margin: 0;
+  text-align: center;
+  font-family: 'Pretendard', sans-serif;
+  font-size: 16px;
+  color: #d73333;
+`;
+
+function toStartIso(date: string): string | null {
+  if (!date.trim()) {
+    return null;
+  }
+
+  return `${date}T00:00:00Z`;
+}
+
+function toEndIso(date: string): string | null {
+  if (!date.trim()) {
+    return null;
+  }
+
+  return `${date}T23:59:59Z`;
+}
+
 function CreatePage() {
   const navigate = useNavigate();
   const [scale, setScale] = useState(1);
@@ -283,6 +308,8 @@ function CreatePage() {
   const [endDate, setEndDate] = useState('2023-06-10');
   const [penaltyContent, setPenaltyContent] = useState('');
   const [generatedCode, setGeneratedCode] = useState('123456');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const isPenaltyScreen = mode === 'create' && createStep === 'penalty';
   const isCodeScreen = mode === 'create' && createStep === 'code';
@@ -314,11 +341,28 @@ function CreatePage() {
     };
   }, [cardSize]);
 
-  function handleSubmitAsync(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmitAsync(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setErrorMessage('');
 
     if (mode === 'join') {
-      navigate('/exchange');
+      if (!joinCode.trim()) {
+        setErrorMessage('참여코드를 입력해 주세요.');
+        return;
+      }
+
+      setIsSubmitting(true);
+
+      try {
+        await joinRoom({ room_code: joinCode.trim() });
+        navigate('/exchange');
+      } catch (error) {
+        const message = error instanceof Error ? error.message : '방 참여 중 오류가 발생했습니다.';
+        setErrorMessage(message);
+      } finally {
+        setIsSubmitting(false);
+      }
+
       return;
     }
 
@@ -327,8 +371,23 @@ function CreatePage() {
       return;
     }
 
-    setGeneratedCode(String(Math.floor(100000 + Math.random() * 900000)));
-    setCreateStep('code');
+    setIsSubmitting(true);
+
+    try {
+      const response = await createRoom({
+        penalties: penaltyContent.trim() ? [penaltyContent.trim()] : [],
+        start_date: toStartIso(startDate),
+        end_date: toEndIso(endDate),
+      });
+
+      setGeneratedCode(response.room_code);
+      setCreateStep('code');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '방 생성 중 오류가 발생했습니다.';
+      setErrorMessage(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -438,13 +497,18 @@ function CreatePage() {
 
               {isPenaltyScreen ? (
                 <WideActionRow>
-                  <Submit type="submit">추가하기</Submit>
+                  <Submit type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? '처리 중...' : '추가하기'}
+                  </Submit>
                 </WideActionRow>
               ) : (
                 <ActionRow>
-                  <Submit type="submit">{mode === 'join' ? '참여하기' : '생성하기'}</Submit>
+                  <Submit type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? '처리 중...' : mode === 'join' ? '참여하기' : '생성하기'}
+                  </Submit>
                 </ActionRow>
               )}
+              {errorMessage && <ErrorMessage>{errorMessage}</ErrorMessage>}
             </Form>
         </Card>
       )}
