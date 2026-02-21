@@ -118,6 +118,12 @@ const Narrow = styled.div`
   margin: 0 auto;
 `;
 
+const JoinFields = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+`;
+
 const ModeTabs = styled.div`
   background: #e2f2ff;
   border-radius: 12px;
@@ -307,6 +313,7 @@ function CreatePage() {
   const [mode, setMode] = useState<'create' | 'join'>('join');
   const [createStep, setCreateStep] = useState<'create' | 'penalty' | 'code'>('create');
   const [joinCode, setJoinCode] = useState('123456');
+  const [joinDiscordUserId, setJoinDiscordUserId] = useState('');
   const [roomTitle, setRoomTitle] = useState('FOSPI 모임');
   const [startDate, setStartDate] = useState('2023-06-10');
   const [endDate, setEndDate] = useState('2023-06-10');
@@ -358,7 +365,10 @@ function CreatePage() {
       setIsSubmitting(true);
 
       try {
-        await joinRoom({ room_code: joinCode.trim() });
+        await joinRoom({
+          room_code: joinCode.trim(),
+          discord_user_id: joinDiscordUserId.trim() || null,
+        });
         saveRoomCode(joinCode.trim());
         navigate(`/exchange/${joinCode.trim()}`);
       } catch (error) {
@@ -462,15 +472,27 @@ function CreatePage() {
 
               {mode === 'join' && (
                 <Center>
-                  <Field>
-                    <Label>참여코드</Label>
-                    <Input
-                      type="text"
-                      value={joinCode}
-                      onChange={(event) => setJoinCode(event.target.value)}
-                      placeholder="참여코드를 입력하세요"
-                    />
-                  </Field>
+                  <JoinFields>
+                    <Field>
+                      <Label>참여코드</Label>
+                      <Input
+                        type="text"
+                        value={joinCode}
+                        onChange={(event) => setJoinCode(event.target.value)}
+                        placeholder="참여코드를 입력하세요"
+                      />
+                    </Field>
+
+                    <Field>
+                      <Label>디스코드 아이디</Label>
+                      <Input
+                        type="text"
+                        value={joinDiscordUserId}
+                        onChange={(event) => setJoinDiscordUserId(event.target.value)}
+                        placeholder="디스코드 아이디를 입력하세요"
+                      />
+                    </Field>
+                  </JoinFields>
                 </Center>
               )}
 
