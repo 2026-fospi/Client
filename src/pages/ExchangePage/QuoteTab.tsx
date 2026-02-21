@@ -38,22 +38,22 @@ const ChartOverlay = styled.div`
 `;
 
 
-/** 1분봉: time은 해당 분의 시작 시각(UTC 초) */
+/** 1분봉 캔들: time은 해당 분 시작 시각(UTC 초) */
 type CandlePoint = { time: number; open: number; high: number; low: number; close: number };
 
-/** history를 1분 단위로 묶어 OHLC 캔들로 변환. 새 데이터가 오른쪽으로 이어지는 실시간 차트용 */
+/** history를 1분 단위로 묶어 OHLC 캔들로 변환 (API는 10~30초 간격 포인트) */
 function historyTo1MinCandles(history: StockHistoryPoint[]): CandlePoint[] {
     if (!history || history.length === 0) return [];
     const sorted = [...history].sort(
         (a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime()
     );
+    const barMs = 60 * 1000;
     const byMinute = new Map<number, number[]>();
     for (const p of sorted) {
         const t = new Date(p.recorded_at).getTime();
-        const minuteStart = Math.floor(t / 60000) * 60000;
-        const key = minuteStart;
-        if (!byMinute.has(key)) byMinute.set(key, []);
-        byMinute.get(key)!.push(parseFloat(p.price));
+        const minuteStart = Math.floor(t / barMs) * barMs;
+        if (!byMinute.has(minuteStart)) byMinute.set(minuteStart, []);
+        byMinute.get(minuteStart)!.push(parseFloat(p.price));
     }
     const result: CandlePoint[] = [];
     const keys = Array.from(byMinute.keys()).sort((a, b) => a - b);
@@ -243,7 +243,7 @@ export default function QuoteTab() {
     const chartRef = useRef<ReturnType<typeof createChart> | null>(null);
     const seriesRef = useRef<{ setData: (data: CandlePoint[]) => void } | null>(null);
 
-    const POLL_INTERVAL_MS = 10_000;
+    const POLL_INTERVAL_MS = 5_000;
 
     useEffect(() => {
         const stockId = Number(selectedMemberId);
@@ -286,6 +286,8 @@ export default function QuoteTab() {
                 timeVisible: true,
                 secondsVisible: true,
                 rightOffset: 12,
+                barSpacing: 14,
+                minBarSpacing: 6,
             },
             rightPriceScale: {borderColor: '#e2e8f0'},
         });

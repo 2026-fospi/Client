@@ -72,7 +72,7 @@ export async function getStockDetail(stockId: number): Promise<StockDetailRespon
 }
 
 export async function getStockLogs(stockId: number): Promise<StockLogItem[]> {
-  return request<StockLogItem[]>(`/api/stocks/${stockId}/logs`, {
+  return request<StockLogItem[]>(`/api/stocks/by-stock/${stockId}/logs`, {
     method: 'GET',
   });
 }

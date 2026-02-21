@@ -17,15 +17,27 @@ const EventsTable = styled.table`
 
   th,
   td {
-    padding: 12px 16px;
+    padding: 14px 20px;
     text-align: left;
     border-bottom: 1px solid #e5e7eb;
+    line-height: 1.4;
+  }
+
+  tbody tr:hover {
+    background: #f8fafc;
   }
 
   th {
     font-weight: 600;
     color: #64748b;
     background: #f8fafc;
+  }
+
+  th:first-child,
+  td:first-child {
+    width: 30%;
+    max-width: 160px;
+    white-space: nowrap;
   }
 `;
 
@@ -94,7 +106,6 @@ export default function EventsTab() {
         <thead>
           <tr>
             <th>거래 일시</th>
-            <th>본문</th>
             <th>타입</th>
             <th>변동가</th>
           </tr>
@@ -118,7 +129,6 @@ export default function EventsTab() {
             logs.map((log, i) => (
               <tr key={`${log.recorded_at}-${i}`}>
                 <td>{formatRecordedAt(log.recorded_at)}</td>
-                <td>{log.content || '-'}</td>
                 <td>{log.log_type}</td>
                 <td
                   style={{
