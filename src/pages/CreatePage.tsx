@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { createRoom, joinRoom, saveRoomCode } from '../api';
+import { createRoom, joinRoom, saveRoomCode, saveRoomEndDate } from '../api';
 import wallpaper from '../assets/login-wallpaper.jpg';
 
 const Viewport = styled.div`
@@ -366,11 +366,12 @@ function CreatePage() {
       setIsSubmitting(true);
 
       try {
-        await joinRoom({
+        const joinRes = await joinRoom({
           room_code: joinCode.trim(),
           discord_user_id: joinDiscordUserId.trim() || null,
         });
         saveRoomCode(joinCode.trim());
+        saveRoomEndDate(joinRes.end_date);
         navigate(`/exchange/${joinCode.trim()}`);
       } catch (error) {
         const message = error instanceof Error ? error.message : '방 참여 중 오류가 발생했습니다.';
@@ -392,7 +393,6 @@ function CreatePage() {
     try {
       const response = await createRoom({
         title: roomTitle.trim() || 'FOSPI 모임',
-        discord_user_id: createDiscordUserId.trim() || null,
         penalties: penaltyContent.trim() ? [penaltyContent.trim()] : [],
         start_date: toStartIso(startDate),
         end_date: toEndIso(endDate),
@@ -400,6 +400,7 @@ function CreatePage() {
       });
 
       saveRoomCode(response.room_code);
+      saveRoomEndDate(response.end_date);
       setGeneratedCode(response.room_code);
       setCreateStep('code');
     } catch (error) {
@@ -510,18 +511,6 @@ function CreatePage() {
                       placeholder="방 제목을 입력하세요"
                     />
                   </Field>
-
-                  {isPenaltyScreen && (
-                    <Field>
-                      <Label>디스코드 아이디</Label>
-                      <Input
-                        type="text"
-                        value={createDiscordUserId}
-                        onChange={(event) => setCreateDiscordUserId(event.target.value)}
-                        placeholder="디스코드 아이디를 입력하세요"
-                      />
-                    </Field>
-                  )}
 
                   <Field>
                     <Label>디스코드 아이디</Label>

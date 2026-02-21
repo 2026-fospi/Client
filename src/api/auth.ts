@@ -2,6 +2,7 @@ import { request } from './http';
 
 export const ACCESS_TOKEN_KEY = 'fospi_access_token';
 export const ROOM_CODE_KEY = 'fospi_room_code';
+export const ROOM_END_DATE_KEY = 'fospi_room_end_date';
 
 export interface LoginRequest {
   email: string;
@@ -21,7 +22,6 @@ export interface TokenResponse {
 
 export interface CreateRoomRequest {
   title: string;
-  discord_user_id?: string | null;
   penalties?: string[];
   start_date?: string | null;
   end_date?: string | null;
@@ -76,6 +76,16 @@ export function saveRoomCode(roomCode: string): void {
 
 export function getRoomCode(): string | null {
   return localStorage.getItem(ROOM_CODE_KEY);
+}
+
+export function saveRoomEndDate(isoEndDate: string | null | undefined): void {
+  if (isoEndDate != null && isoEndDate !== '') {
+    localStorage.setItem(ROOM_END_DATE_KEY, isoEndDate);
+  }
+}
+
+export function getRoomEndDate(): string | null {
+  return localStorage.getItem(ROOM_END_DATE_KEY);
 }
 
 function authHeader(token: string): Record<string, string> {

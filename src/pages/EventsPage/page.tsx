@@ -65,7 +65,7 @@ const PlusIcon = styled.span`
     width: 25px;
     height: 25px;
     border-radius: 50%;
-    color: #111111;
+    color: #111111;ㅍ
     font-size: 22px;
     line-height: 1;
 `;
