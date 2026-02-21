@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { register, saveAccessToken } from '../api';
 import wallpaper from '../assets/login-wallpaper.jpg';
 
 const Page = styled.div`
@@ -166,13 +165,6 @@ function SignupPage() {
     setIsSubmitting(true);
 
     try {
-      const response = await register({
-        email,
-        password,
-        name,
-      });
-
-      saveAccessToken(response.access_token);
       window.alert('회원가입 성공');
       navigate('/login');
     } catch (error) {

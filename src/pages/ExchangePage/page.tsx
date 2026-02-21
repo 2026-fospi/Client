@@ -2,7 +2,6 @@ import { useState } from 'react';
 import styled from 'styled-components';
 import Flex from '../../../components/common/Flex';
 
-// Mock: 디스코드 방 멤버 주식 목록 (연동 후 API로 대체)
 const MOCK_MEMBERS = [
   { id: 'me', name: '내 주식', currentPrice: 12500, changePercent: 2.34 },
   { id: '1', name: '친구A 주식', currentPrice: 8300, changePercent: -0.52 },
@@ -10,21 +9,24 @@ const MOCK_MEMBERS = [
   { id: '3', name: '친구C 주식', currentPrice: 4200, changePercent: -1.22 },
 ];
 
-// Mock: 이벤트 발생 목록
 const MOCK_EVENTS = [
-  { id: '1', dateTime: '2026-02-21 14:32', type: '이벤트', priceChange: '+1,200' },
-  { id: '2', dateTime: '2026-02-21 14:28', type: '채팅', priceChange: '-500' },
-  { id: '3', dateTime: '2026-02-21 14:15', type: '이벤트', priceChange: '+800' },
+  { id: '1', dateTime: '2026-02-21 14:32', type: '이벤트', title: '활동 점수 반영', priceChange: '+1,200' },
+  { id: '2', dateTime: '2026-02-21 14:28', type: '채팅', title: '리액션 취소 반영', priceChange: '-500' },
+  { id: '3', dateTime: '2026-02-21 14:15', type: '이벤트', title: '시간 단위 정산', priceChange: '+800' },
 ];
 
-// ========== Layout ==========
 const Page = styled(Flex).attrs({ width: '100%' })`
-  min-height: calc(100vh - 120px);
+  min-height: calc(100vh - 110px);
   flex-direction: row;
   align-items: stretch;
+  gap: 18px;
+
+  @media (max-width: 1120px) {
+    flex-direction: column;
+  }
 `;
 
-const Main = styled(Flex).attrs({ flex: 1 })`
+const Main = styled(Flex).attrs({ flex: 1, gap: 16 })`
   flex-direction: column;
   min-width: 0;
 `;
@@ -32,61 +34,106 @@ const Main = styled(Flex).attrs({ flex: 1 })`
 const Sidebar = styled(Flex).attrs({ width: 280 })`
   flex-shrink: 0;
   flex-direction: column;
-  border-left: 1px solid #e5e7eb;
-  background: #fafafa;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #ffffff;
+  overflow: hidden;
+
+  @media (max-width: 1120px) {
+    width: 100%;
+    min-height: 300px;
+  }
 `;
 
-// ========== 상단 패널티 알림 ==========
 const NotificationBar = styled(Flex).attrs({
   row: true,
-  gap: 8,
+  gap: 10,
   verticalCenter: true,
 })`
-  padding: 10px 16px;
-  background: #fef3c7;
-  border-bottom: 1px solid #fcd34d;
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: #fff4d9;
+  border: 1px solid #ffd98d;
   font-size: 14px;
   color: #92400e;
 `;
 
 const NotificationIcon = styled.span`
-  font-size: 18px;
+  font-size: 16px;
   line-height: 1;
 `;
 
-// ========== 자산 제목 (선택된 멤버 주식) ==========
-const AssetHeader = styled(Flex).attrs({ gap: 4 })`
-  padding: 16px 20px;
-  border-bottom: 1px solid #e5e7eb;
+const MarketCard = styled(Flex).attrs({ gap: 14 })`
+  padding: 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #ffffff;
+`;
+
+const AssetHeader = styled(Flex).attrs({ row: true, verticalCenter: true })`
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+`;
+
+const AssetMeta = styled(Flex).attrs({ gap: 4 })`
+  min-width: 220px;
 `;
 
 const AssetTitle = styled.span`
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 600;
-  color: #111;
+  color: #0f172a;
 `;
 
-const AssetPrice = styled.span<{ $up?: boolean }>`
-  font-size: 24px;
+const AssetSubTitle = styled.span`
+  font-size: 13px;
+  color: #64748b;
+`;
+
+const AssetPrice = styled.span<{ $positive?: boolean }>`
+  font-size: 34px;
   font-weight: 700;
-  color: ${({ $up }) => ($up === true ? '#ef4444' : $up === false ? '#2563eb' : '#111')};
+  color: ${({ $positive }) => ($positive ? '#dc2626' : '#2563eb')};
 `;
 
-const AssetChange = styled.span<{ $up?: boolean }>`
+const AssetChange = styled.span<{ $positive?: boolean }>`
   font-size: 14px;
-  color: ${({ $up }) => ($up === true ? '#ef4444' : $up === false ? '#2563eb' : '#64748b')};
+  color: ${({ $positive }) => ($positive ? '#dc2626' : '#2563eb')};
 `;
 
-// ========== 탭 (시세 | 이벤트 발생) ==========
+const StatGrid = styled(Flex).attrs({ row: true, gap: 12 })`
+  flex-wrap: wrap;
+`;
+
+const StatItem = styled(Flex).attrs({ gap: 4 })`
+  min-width: 132px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #edf2f8;
+  background: #f8fbff;
+`;
+
+const StatLabel = styled.span`
+  font-size: 12px;
+  color: #64748b;
+`;
+
+const StatValue = styled.span`
+  font-size: 16px;
+  font-weight: 600;
+  color: #0f172a;
+`;
+
 const Tabs = styled(Flex).attrs({ row: true, gap: 0 })`
-  border-bottom: 1px solid #e5e7eb;
-  padding: 0 20px;
+  border-bottom: 1px solid #edf2f8;
+  padding: 0 4px;
 `;
 
 const Tab = styled.button<{ $active?: boolean }>`
-  padding: 14px 20px;
+  padding: 12px 16px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   color: ${({ $active }) => ($active ? '#2563eb' : '#64748b')};
   background: none;
   border: none;
@@ -99,44 +146,45 @@ const Tab = styled.button<{ $active?: boolean }>`
   }
 `;
 
-// ========== 차트 영역 ==========
-const ChartSection = styled(Flex).attrs({ flex: 1 })`
+const ChartSection = styled(Flex).attrs({ flex: 1, gap: 12 })`
   min-height: 360px;
-  padding: 16px 20px;
+  padding: 0;
   background: #fff;
-  border-bottom: 1px solid #e5e7eb;
 `;
 
 const ChartPlaceholder = styled.div`
   width: 100%;
   height: 100%;
-  min-height: 320px;
-  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  min-height: 300px;
+  background: linear-gradient(180deg, #f8fbff 0%, #f1f6ff 100%);
+  border: 1px solid #dfe9f8;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #94a3b8;
+  color: #6b7b93;
   font-size: 14px;
 `;
 
-// ========== 차트 하단: 매수/매도 ==========
 const OrderSection = styled(Flex).attrs({ row: true, gap: 24 })`
-  padding: 20px;
+  padding: 0;
   background: #fff;
-  border-bottom: 1px solid #e5e7eb;
+
+  @media (max-width: 980px) {
+    flex-direction: column;
+  }
 `;
 
 const OrderBlock = styled(Flex).attrs({ flex: 1 })`
-  max-width: 320px;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  min-width: 260px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #fff;
   overflow: hidden;
 `;
 
 const OrderHeader = styled.div<{ $buy?: boolean }>`
-  padding: 12px 16px;
+  padding: 13px 16px;
   font-size: 14px;
   font-weight: 600;
   color: #fff;
@@ -164,7 +212,8 @@ const OrderTable = styled.table`
 
 const OrderInput = styled.input`
   width: 100%;
-  padding: 8px 12px;
+  height: 36px;
+  padding: 0 12px;
   font-size: 14px;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
@@ -178,8 +227,8 @@ const OrderInput = styled.input`
 
 const OrderButton = styled.button<{ $buy?: boolean }>`
   width: 100%;
-  margin-top: 12px;
-  padding: 12px;
+  margin-top: 10px;
+  padding: 11px;
   font-size: 15px;
   font-weight: 600;
   color: #fff;
@@ -193,9 +242,8 @@ const OrderButton = styled.button<{ $buy?: boolean }>`
   }
 `;
 
-// ========== 이벤트 발생 탭 ==========
 const EventsSection = styled(Flex)`
-  padding: 20px;
+  padding: 0;
   background: #fff;
 `;
 
@@ -213,18 +261,17 @@ const EventsTable = styled.table`
   th {
     font-weight: 600;
     color: #64748b;
-    background: #f8fafc;
+    background: #f8fbff;
   }
 `;
 
-// ========== 멤버 주식 사이드바 ==========
 const SidebarHeader = styled.div`
   padding: 12px 16px;
   font-size: 13px;
   font-weight: 600;
   color: #64748b;
-  border-bottom: 1px solid #e5e7eb;
-  background: #f8fafc;
+  border-bottom: 1px solid #edf2f8;
+  background: #f8fbff;
 `;
 
 const SearchInput = styled.input`
@@ -281,7 +328,6 @@ const MemberChange = styled.span<{ $up?: boolean }>`
   color: ${({ $up }) => ($up === true ? '#ef4444' : $up === false ? '#2563eb' : '#64748b')};
 `;
 
-// ========== Component ==========
 type TabId = 'quote' | 'events';
 
 function ExchangePage() {
@@ -300,153 +346,174 @@ function ExchangePage() {
 
   const formatPrice = (n: number) => n.toLocaleString('ko-KR');
   const formatChange = (p: number) => `${p >= 0 ? '+' : ''}${p.toFixed(2)}%`;
+  const isPositive = selectedMember.changePercent >= 0;
 
   return (
     <Page>
       <Main>
-        {/* 상단 패널티 알림 */}
         <NotificationBar>
           <NotificationIcon aria-hidden>🔔</NotificationIcon>
-          <span>패널티 및 공지 알림이 여기에 표시됩니다.</span>
+          <span>이번 주 꼴등 패널티 후보 알림이 2건 있습니다.</span>
         </NotificationBar>
 
-        {/* 선택된 자산 헤더 */}
-        <AssetHeader>
-          <AssetTitle>{selectedMember.name} · KRW</AssetTitle>
-          <AssetPrice $up={selectedMember.changePercent > 0 ? false : selectedMember.changePercent < 0 ? true : undefined}>
-            {formatPrice(selectedMember.currentPrice)} KRW
-          </AssetPrice>
-          <AssetChange $up={selectedMember.changePercent > 0 ? true : selectedMember.changePercent < 0 ? false : undefined}>
-            {formatChange(selectedMember.changePercent)} {selectedMember.changePercent >= 0 ? '▲' : '▼'}
-          </AssetChange>
-        </AssetHeader>
+        <MarketCard>
+          <AssetHeader>
+            <AssetMeta>
+              <AssetTitle>{selectedMember.name} · KRW</AssetTitle>
+              <AssetSubTitle>최근 체결가 기준</AssetSubTitle>
+            </AssetMeta>
+            <Flex gap={2}>
+              <AssetPrice $positive={isPositive}>{formatPrice(selectedMember.currentPrice)} KRW</AssetPrice>
+              <AssetChange $positive={isPositive}>
+                {formatChange(selectedMember.changePercent)} {isPositive ? '▲' : '▼'}
+              </AssetChange>
+            </Flex>
+          </AssetHeader>
 
-        {/* 탭: 시세 | 이벤트 발생 */}
-        <Tabs>
-          <Tab $active={activeTab === 'quote'} onClick={() => setActiveTab('quote')}>
-            시세
-          </Tab>
-          <Tab $active={activeTab === 'events'} onClick={() => setActiveTab('events')}>
-            이벤트 발생
-          </Tab>
-        </Tabs>
+          <StatGrid>
+            <StatItem>
+              <StatLabel>고가</StatLabel>
+              <StatValue>{formatPrice(selectedMember.currentPrice + 480)}</StatValue>
+            </StatItem>
+            <StatItem>
+              <StatLabel>저가</StatLabel>
+              <StatValue>{formatPrice(selectedMember.currentPrice - 320)}</StatValue>
+            </StatItem>
+            <StatItem>
+              <StatLabel>거래량</StatLabel>
+              <StatValue>{formatPrice(12472)}</StatValue>
+            </StatItem>
+            <StatItem>
+              <StatLabel>관심도 점수</StatLabel>
+              <StatValue>{(selectedMember.changePercent * 10 + 70).toFixed(1)}</StatValue>
+            </StatItem>
+          </StatGrid>
 
-        {activeTab === 'quote' && (
-          <>
-            {/* 차트 (기본: 내 차트) */}
-            <ChartSection>
-              <ChartPlaceholder>
-                {selectedMemberId === 'me' ? '내 차트' : `${selectedMember.name} 차트`} · 연동 후 실제 차트가 표시됩니다.
-              </ChartPlaceholder>
-            </ChartSection>
+          <Tabs>
+            <Tab $active={activeTab === 'quote'} onClick={() => setActiveTab('quote')}>
+              시세
+            </Tab>
+            <Tab $active={activeTab === 'events'} onClick={() => setActiveTab('events')}>
+              이벤트 발생
+            </Tab>
+          </Tabs>
 
-            {/* 매수 / 매도 */}
-            <OrderSection>
-              <OrderBlock>
-                <OrderHeader $buy>매수</OrderHeader>
-                <OrderTable>
-                  <tbody>
-                    <tr>
-                      <td>주문 가능</td>
-                      <td>{formatPrice(selectedMember.currentPrice * 1000)} KRW</td>
-                    </tr>
-                    <tr>
-                      <td>주문수량</td>
-                      <td>
-                        <OrderInput
-                          type="text"
-                          placeholder="수량 입력"
-                          value={buyQuantity}
-                          onChange={(e) => setBuyQuantity(e.target.value)}
-                        />
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>주문 총액</td>
-                      <td>
-                        {buyQuantity
-                          ? formatPrice(selectedMember.currentPrice * (Number(buyQuantity) || 0)) + ' KRW'
-                          : '-'}
-                      </td>
-                    </tr>
-                  </tbody>
-                </OrderTable>
-                <div style={{ padding: '0 16px 16px' }}>
-                  <OrderButton $buy>매수</OrderButton>
-                </div>
-              </OrderBlock>
+          {activeTab === 'quote' && (
+            <>
+              <ChartSection>
+                <ChartPlaceholder>
+                  {selectedMemberId === 'me' ? '내 주식 차트' : `${selectedMember.name} 차트`} · 실제 시세 연동 예정
+                </ChartPlaceholder>
+              </ChartSection>
 
-              <OrderBlock>
-                <OrderHeader $buy={false}>매도</OrderHeader>
-                <OrderTable>
-                  <tbody>
-                    <tr>
-                      <td>주문 가능</td>
-                      <td>{formatPrice(selectedMember.currentPrice * 500)} KRW</td>
-                    </tr>
-                    <tr>
-                      <td>주문수량</td>
-                      <td>
-                        <OrderInput
-                          type="text"
-                          placeholder="수량 입력"
-                          value={sellQuantity}
-                          onChange={(e) => setSellQuantity(e.target.value)}
-                        />
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>주문 총액</td>
-                      <td>
-                        {sellQuantity
-                          ? formatPrice(selectedMember.currentPrice * (Number(sellQuantity) || 0)) + ' KRW'
-                          : '-'}
-                      </td>
-                    </tr>
-                  </tbody>
-                </OrderTable>
-                <div style={{ padding: '0 16px 16px' }}>
-                  <OrderButton $buy={false}>매도</OrderButton>
-                </div>
-              </OrderBlock>
-            </OrderSection>
-          </>
-        )}
+              <OrderSection>
+                <OrderBlock>
+                  <OrderHeader $buy>매수</OrderHeader>
+                  <OrderTable>
+                    <tbody>
+                      <tr>
+                        <td>주문 가능</td>
+                        <td>{formatPrice(selectedMember.currentPrice * 1000)} KRW</td>
+                      </tr>
+                      <tr>
+                        <td>주문수량</td>
+                        <td>
+                          <OrderInput
+                            type="text"
+                            placeholder="수량 입력"
+                            value={buyQuantity}
+                            onChange={(event) => setBuyQuantity(event.target.value)}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>주문 총액</td>
+                        <td>
+                          {buyQuantity
+                            ? formatPrice(selectedMember.currentPrice * (Number(buyQuantity) || 0)) + ' KRW'
+                            : '-'}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </OrderTable>
+                  <div style={{ padding: '0 16px 16px' }}>
+                    <OrderButton $buy>매수</OrderButton>
+                  </div>
+                </OrderBlock>
 
-        {activeTab === 'events' && (
-          <EventsSection>
-            <EventsTable>
-              <thead>
-                <tr>
-                  <th>거래 일시</th>
-                  <th>타입</th>
-                  <th>변동가</th>
-                </tr>
-              </thead>
-              <tbody>
-                {MOCK_EVENTS.map((ev) => (
-                  <tr key={ev.id}>
-                    <td>{ev.dateTime}</td>
-                    <td>{ev.type}</td>
-                    <td style={{ color: ev.priceChange.startsWith('+') ? '#ef4444' : '#2563eb' }}>
-                      {ev.priceChange}
-                    </td>
+                <OrderBlock>
+                  <OrderHeader $buy={false}>매도</OrderHeader>
+                  <OrderTable>
+                    <tbody>
+                      <tr>
+                        <td>주문 가능</td>
+                        <td>{formatPrice(selectedMember.currentPrice * 500)} KRW</td>
+                      </tr>
+                      <tr>
+                        <td>주문수량</td>
+                        <td>
+                          <OrderInput
+                            type="text"
+                            placeholder="수량 입력"
+                            value={sellQuantity}
+                            onChange={(event) => setSellQuantity(event.target.value)}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>주문 총액</td>
+                        <td>
+                          {sellQuantity
+                            ? formatPrice(selectedMember.currentPrice * (Number(sellQuantity) || 0)) + ' KRW'
+                            : '-'}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </OrderTable>
+                  <div style={{ padding: '0 16px 16px' }}>
+                    <OrderButton $buy={false}>매도</OrderButton>
+                  </div>
+                </OrderBlock>
+              </OrderSection>
+            </>
+          )}
+
+          {activeTab === 'events' && (
+            <EventsSection>
+              <EventsTable>
+                <thead>
+                  <tr>
+                    <th>거래 일시</th>
+                    <th>타입</th>
+                    <th>내용</th>
+                    <th>변동가</th>
                   </tr>
-                ))}
-              </tbody>
-            </EventsTable>
-          </EventsSection>
-        )}
+                </thead>
+                <tbody>
+                  {MOCK_EVENTS.map((event) => (
+                    <tr key={event.id}>
+                      <td>{event.dateTime}</td>
+                      <td>{event.type}</td>
+                      <td>{event.title}</td>
+                      <td style={{ color: event.priceChange.startsWith('+') ? '#dc2626' : '#2563eb' }}>
+                        {event.priceChange}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </EventsTable>
+            </EventsSection>
+          )}
+        </MarketCard>
       </Main>
 
-      {/* 멤버 주식 선택 사이드바 */}
       <Sidebar>
         <SidebarHeader>멤버 주식</SidebarHeader>
         <SearchInput
           type="text"
           placeholder="이름 검색"
           value={searchKeyword}
-          onChange={(e) => setSearchKeyword(e.target.value)}
+          onChange={(event) => setSearchKeyword(event.target.value)}
         />
         <Flex row style={{ padding: '8px 16px', fontSize: 12, color: '#94a3b8' }}>
           <span style={{ flex: 1 }}>이름</span>
