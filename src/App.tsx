@@ -4,6 +4,7 @@ import {
   LoginPage,
   SignupPage,
   CreatePage,
+  RoomSelectPage,
   ExchangePage,
   HoldingsPage,
   EventsPage,
@@ -21,6 +22,7 @@ function App() {
         <Route path="/create" element={<CreatePage />} />
         <Route element={<Layout />}>
           <Route path="exchange" element={<ExchangePage />} />
+          <Route path="room-select" element={<RoomSelectPage />} />
           <Route path="holdings" element={<HoldingsPage />} />
           <Route path="events" element={<EventsPage />} />
           <Route path="mypage" element={<MyPage />} />

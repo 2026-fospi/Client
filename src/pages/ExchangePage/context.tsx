@@ -40,8 +40,8 @@ export function ExchangePageProvider({ children }: { children: React.ReactNode }
         if (cancelled) return;
         const mapped = list.map(mapStockToMember);
         setMembers(mapped);
-        if (mapped.length > 0 && !selectedMemberId) {
-          setSelectedMemberId(mapped[0].id);
+        if (mapped.length > 0) {
+          setSelectedMemberId((prev) => prev || mapped[0].id);
         }
       } catch (e) {
         if (!cancelled) {

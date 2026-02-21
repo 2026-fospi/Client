@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import styled from 'styled-components';
-import { createNews, getNews } from '../../api';
+import { createNews, getNews, listUsers } from '../../api';
 import Flex from '../../../components/common/Flex';
 
 type EventCardItem = {
@@ -18,6 +18,12 @@ type NewsApiItem = {
   content: string;
   related_user_id: number | null;
   created_at: string;
+};
+
+type UserItem = {
+  id: number;
+  name: string;
+  discord_user_id?: string | null;
 };
 
 const Page = styled(Flex)`
@@ -256,6 +262,20 @@ const FieldInput = styled.input`
   box-sizing: border-box;
 `;
 
+const FieldSelectTrigger = styled.button<{ $placeholder?: boolean }>`
+  height: 48px;
+  border-radius: 8px;
+  border: 1px solid #757575;
+  background: #ffffff;
+  padding: 0 16px;
+  font-family: 'Pretendard', sans-serif;
+  font-size: 22px;
+  color: ${({ $placeholder }) => ($placeholder ? '#8f8f8f' : '#000000')};
+  box-sizing: border-box;
+  text-align: left;
+  cursor: pointer;
+`;
+
 const FieldTextArea = styled.textarea`
   height: 196px;
   border-radius: 10px;
@@ -296,6 +316,75 @@ const StatusMessage = styled.p`
   color: #6b7280;
 `;
 
+const TargetOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgba(0, 0, 0, 0.24);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+`;
+
+const TargetModal = styled.div`
+  width: min(460px, calc(100vw - 40px));
+  max-height: min(620px, calc(100vh - 40px));
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.22);
+  padding: 14px 14px 10px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+`;
+
+const TargetHeader = styled.div`
+  font-family: 'Pretendard', sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: #111111;
+  padding: 6px 10px 10px;
+`;
+
+const TargetList = styled.div`
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 4px 8px;
+`;
+
+const TargetItem = styled.button<{ $active?: boolean }>`
+  width: 100%;
+  border: 1px solid ${({ $active }) => ($active ? '#1783ff' : '#e3e6eb')};
+  background: ${({ $active }) => ($active ? '#eaf4ff' : '#ffffff')};
+  border-radius: 10px;
+  min-height: 44px;
+  padding: 0 14px;
+  text-align: left;
+  font-family: 'Pretendard', sans-serif;
+  font-size: 15px;
+  color: #111111;
+  cursor: pointer;
+`;
+
+const TargetModalFooter = styled.div`
+  border-top: 1px solid #eef1f5;
+  padding: 10px 6px 2px;
+  display: flex;
+  justify-content: flex-end;
+`;
+
+const TargetCloseButton = styled.button`
+  border: none;
+  background: transparent;
+  color: #4b5563;
+  font-family: 'Pretendard', sans-serif;
+  font-size: 14px;
+  cursor: pointer;
+`;
+
 function formatDateLabel(iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) {
@@ -308,13 +397,14 @@ function formatDateLabel(iso: string): string {
   return `${year}-${month}-${day}`;
 }
 
-function mapNewsToCard(item: NewsApiItem): EventCardItem {
+function mapNewsToCard(item: NewsApiItem, users: UserItem[]): EventCardItem {
+  const matchedUser = users.find((user) => user.id === item.related_user_id);
   return {
     id: String(item.id),
     title: item.title,
     description: item.content,
     period: formatDateLabel(item.created_at),
-    target: item.related_user_id === null ? '전체' : `유저 #${item.related_user_id}`,
+    target: item.related_user_id === null ? '전체' : matchedUser?.name ?? `유저 #${item.related_user_id}`,
   };
 }
 
@@ -323,11 +413,26 @@ function EventsPage() {
   const [selectedEvent, setSelectedEvent] = useState<EventCardItem | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [newTitle, setNewTitle] = useState('');
-  const [newTarget, setNewTarget] = useState('윤유섭 외 3명 선택됨');
+  const [selectedTargetUserId, setSelectedTargetUserId] = useState<number | null | undefined>(undefined);
   const [newDescription, setNewDescription] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
+  const [users, setUsers] = useState<UserItem[]>([]);
+  const [isTargetModalOpen, setIsTargetModalOpen] = useState(false);
+
+  useEffect(() => {
+    async function loadUsers() {
+      try {
+        const response = await listUsers();
+        setUsers(response);
+      } catch {
+        setUsers([]);
+      }
+    }
+
+    void loadUsers();
+  }, []);
 
   useEffect(() => {
     async function loadNews() {
@@ -336,7 +441,7 @@ function EventsPage() {
 
       try {
         const response = await getNews();
-        setEvents(response.map(mapNewsToCard));
+        setEvents(response.map((item) => mapNewsToCard(item, users)));
       } catch (error) {
         const message = error instanceof Error ? error.message : '뉴스 목록을 불러오지 못했습니다.';
         setStatusMessage(message);
@@ -346,7 +451,7 @@ function EventsPage() {
     }
 
     void loadNews();
-  }, []);
+  }, [users]);
 
   async function handleCreateEvent(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -363,17 +468,17 @@ function EventsPage() {
       const created = await createNews({
         title: newTitle.trim(),
         content: newDescription.trim(),
-        related_user_id: null,
+        related_user_id: selectedTargetUserId ?? null,
       });
 
-      const mapped = mapNewsToCard(created);
-      mapped.target = newTarget.trim() || mapped.target;
+      const mapped = mapNewsToCard(created, users);
 
       setEvents((prev) => [mapped, ...prev]);
       setIsCreating(false);
       setSelectedEvent(mapped);
       setNewTitle('');
       setNewDescription('');
+      setSelectedTargetUserId(undefined);
     } catch (error) {
       const message = error instanceof Error ? error.message : '뉴스 추가 중 오류가 발생했습니다.';
       setStatusMessage(message);
@@ -398,7 +503,17 @@ function EventsPage() {
 
             <Field>
               <FieldLabel>대상</FieldLabel>
-              <FieldInput value={newTarget} onChange={(event) => setNewTarget(event.target.value)} />
+              <FieldSelectTrigger
+                type="button"
+                $placeholder={selectedTargetUserId === undefined}
+                onClick={() => setIsTargetModalOpen(true)}
+              >
+                {selectedTargetUserId === undefined
+                  ? '대상을 선택하세요.'
+                  : selectedTargetUserId === null
+                    ? '전체'
+                    : users.find((user) => user.id === selectedTargetUserId)?.name ?? `유저 #${selectedTargetUserId}`}
+              </FieldSelectTrigger>
             </Field>
 
               <Field>
@@ -469,6 +584,46 @@ function EventsPage() {
             </DetailBody>
           </DetailModal>
         </Overlay>
+      )}
+
+      {isTargetModalOpen && (
+        <TargetOverlay onClick={() => setIsTargetModalOpen(false)}>
+          <TargetModal onClick={(event) => event.stopPropagation()}>
+            <TargetHeader>대상을 선택하세요.</TargetHeader>
+            <TargetList>
+              <TargetItem
+                type="button"
+                $active={selectedTargetUserId === null}
+                onClick={() => {
+                  setSelectedTargetUserId(null);
+                  setIsTargetModalOpen(false);
+                }}
+              >
+                전체
+              </TargetItem>
+
+              {users.map((user) => (
+                <TargetItem
+                  key={user.id}
+                  type="button"
+                  $active={selectedTargetUserId === user.id}
+                  onClick={() => {
+                    setSelectedTargetUserId(user.id);
+                    setIsTargetModalOpen(false);
+                  }}
+                >
+                  {user.name}
+                </TargetItem>
+              ))}
+            </TargetList>
+
+            <TargetModalFooter>
+              <TargetCloseButton type="button" onClick={() => setIsTargetModalOpen(false)}>
+                닫기
+              </TargetCloseButton>
+            </TargetModalFooter>
+          </TargetModal>
+        </TargetOverlay>
       )}
     </Page>
   );

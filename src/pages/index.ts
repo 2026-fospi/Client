@@ -5,3 +5,4 @@ export { default as MyPage } from './MyPage/page';
 export { default as LoginPage } from './LoginPage';
 export { default as SignupPage } from './SignupPage';
 export { default as CreatePage } from './CreatePage';
+export { default as RoomSelectPage } from './RoomSelectPage';

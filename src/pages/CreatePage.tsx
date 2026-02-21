@@ -307,6 +307,7 @@ function CreatePage() {
   const [mode, setMode] = useState<'create' | 'join'>('join');
   const [createStep, setCreateStep] = useState<'create' | 'penalty' | 'code'>('create');
   const [joinCode, setJoinCode] = useState('123456');
+  const [roomTitle, setRoomTitle] = useState('FOSPI 모임');
   const [startDate, setStartDate] = useState('2023-06-10');
   const [endDate, setEndDate] = useState('2023-06-10');
   const [penaltyContent, setPenaltyContent] = useState('');
@@ -378,6 +379,7 @@ function CreatePage() {
 
     try {
       const response = await createRoom({
+        title: roomTitle.trim() || 'FOSPI 모임',
         penalties: penaltyContent.trim() ? [penaltyContent.trim()] : [],
         start_date: toStartIso(startDate),
         end_date: toEndIso(endDate),
@@ -412,7 +414,7 @@ function CreatePage() {
             디스코드 봇을 추가해주세요
           </DiscordLink>
           <CodeValue>{generatedCode}</CodeValue>
-          <StartButton type="button" onClick={() => navigate('/exchange')}>
+          <StartButton type="button" onClick={() => navigate('/room-select')}>
             시작하기
           </StartButton>
         </CodeCard>
@@ -472,6 +474,16 @@ function CreatePage() {
 
               {mode === 'create' && (
                 <Narrow>
+                  <Field>
+                    <Label>방 제목</Label>
+                    <Input
+                      type="text"
+                      value={roomTitle}
+                      onChange={(event) => setRoomTitle(event.target.value)}
+                      placeholder="방 제목을 입력하세요"
+                    />
+                  </Field>
+
                   <Field>
                     <Label>페널티 기간</Label>
                     <DateRange>

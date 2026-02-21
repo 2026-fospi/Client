@@ -19,6 +19,7 @@ export interface TokenResponse {
 }
 
 export interface CreateRoomRequest {
+  title: string;
   penalties?: string[];
   start_date?: string | null;
   end_date?: string | null;

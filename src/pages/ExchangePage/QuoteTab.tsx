@@ -1,7 +1,6 @@
 import {useState} from 'react';
 import styled from 'styled-components';
 import Flex from '../../../components/common/Flex';
-import {FiChevronLeft} from 'react-icons/fi';
 import {useExchangePage} from './exchangePageContext';
 
 const ChartSection = styled(Flex).attrs({flex: 1})`
@@ -214,7 +213,7 @@ export default function QuoteTab() {
                     <ModalPanel onClick={(e) => e.stopPropagation()}>
                         <ModalHeader>
                             <ModalBackBtn type="button" onClick={closeOrderModal} aria-label="닫기">
-                                <FiChevronLeft size={22}/>
+                                ←
                             </ModalBackBtn>
                         </ModalHeader>
                         <Flex gap={10}>
