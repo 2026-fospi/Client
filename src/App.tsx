@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/layout/Layout';
 import {
+  LoginPage,
   ExchangePage,
   HoldingsPage,
   EventsPage,
@@ -13,7 +14,8 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Layout />}>
-          <Route index element={<ExchangePage />} />
+          <Route index element={<LoginPage />} />
+          <Route path="exchange" element={<ExchangePage />} />
           <Route path="holdings" element={<HoldingsPage />} />
           <Route path="events" element={<EventsPage />} />
           <Route path="mypage" element={<MyPage />} />

@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import Flex from '../../../components/common/Flex';
 import Navbar from './Navbar';
@@ -19,6 +19,13 @@ const Content = styled(Flex).attrs({ flex: 1 })`
 `;
 
 function Layout() {
+  const { pathname } = useLocation();
+  const isLoginPage = pathname === '/';
+
+  if (isLoginPage) {
+    return <Outlet />;
+  }
+
   return (
     <LayoutContainer>
       <header style={{ flexShrink: 0 }}>
