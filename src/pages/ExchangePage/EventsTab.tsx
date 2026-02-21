@@ -54,29 +54,26 @@ function formatChangeAmount(amount: string): string {
 export default function EventsTab() {
   const { selectedMemberId } = useExchangePage();
   const [logs, setLogs] = useState<StockLogItem[]>([]);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const stockId = Number(selectedMemberId);
     if (Number.isNaN(stockId) || selectedMemberId === '') {
-      setLogs([]);
-      setError(null);
       return;
     }
 
     let cancelled = false;
-    setLoading(true);
-    setError(null);
 
     getStockLogs(stockId)
       .then((data) => {
-        if (!cancelled) setLogs(Array.isArray(data) ? data : []);
+        if (!cancelled) {
+          setError(null);
+          setLogs(Array.isArray(data) ? data : []);
+        }
       })
       .catch((e) => {
         if (cancelled) return;
         const msg = e instanceof Error ? e.message : String(e);
-        // 로그가 없을 때 백엔드가 404를 주는 경우 빈 목록으로 처리
         if (msg.includes('404') || msg.includes('Not Found')) {
           setLogs([]);
           setError(null);
@@ -84,23 +81,12 @@ export default function EventsTab() {
           setError('변동 로그를 불러오지 못했습니다.');
           setLogs([]);
         }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
       });
 
     return () => {
       cancelled = true;
     };
   }, [selectedMemberId]);
-
-  if (loading) {
-    return (
-      <EventsSection>
-        <div style={{ padding: 24, color: '#64748b', fontSize: 14 }}>로딩 중...</div>
-      </EventsSection>
-    );
-  }
 
   return (
     <EventsSection>
